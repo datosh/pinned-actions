@@ -4,76 +4,68 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v60/github"
+	"github.com/stacklok/frizbee/pkg/ghactions"
 )
 
 func main() {
-	// TODO: Caching for development https://github.com/google/go-github?tab=readme-ov-file#conditional-requests
+	config := NewConfig()
 	client := github.NewClient(nil)
-	// TODO: Actual pagination https://github.com/google/go-github?tab=readme-ov-file#pagination
-	searchResult, resp, err := client.Search.Repositories(
-		context.Background(),
-		"stars:>1000",
-		&github.SearchOptions{
-			Sort:  "stars",
-			Order: "desc",
-			ListOptions: github.ListOptions{
-				PerPage: 5,
-			},
-		})
+
+	ctx := context.Background()
+
+	downloaded := make(chan string)
+	downloader := NewRepositoryDownloader(client, config)
+
+	go func() {
+		log.Println("Waiting for downloads")
+		for {
+			select {
+			case repo := <-downloaded:
+				analysis, err := AnalyseRepository(*config, repo)
+				if err != nil {
+					log.Fatalf("analysing repository: %v", err)
+				}
+				log.Printf("%v", analysis)
+			}
+		}
+	}()
+
+	err := downloader.Download(ctx, downloaded)
 	if err != nil {
-		log.Fatalf("fetching repositories: %v", err)
+		log.Fatalf("downloading: %v", err)
 	}
 
-	log.Printf("Retrieved page: %d\n", resp.FirstPage)
-	if searchResult != nil {
-		for _, repository := range searchResult.Repositories {
-			if *repository.Fork {
-				log.Println("Skipping fork")
-				continue
-			}
-			cloneURL := repository.GetCloneURL()
-			log.Printf("Clone at: %s\n", cloneURL)
-			FetchWorkflows(cloneURL, *repository.Name)
+	// wait for both be done
+}
+
+func AnalyseRepository(config Config, repo string) (Analysis, error) {
+	analysis := NewAnalysis(repo)
+
+	repoPath := filepath.Join(config.DownloadDir, repo)
+	actions, err := ghactions.ListActionsInDirectory(repoPath)
+	if err != nil {
+		return analysis, fmt.Errorf("listing actions: %w", err)
+	}
+
+	for _, action := range actions {
+		if len(action.Ref) == 40 && isHex(action.Ref) {
+			analysis.CountPinned()
+		} else {
+			analysis.CountUnpinned()
 		}
 	}
+
+	return analysis, nil
 }
 
-func FetchWorkflows(cloneURL, repoName string) {
-	cloneInto := filepath.Join("/tmp/pinned", repoName)
-	_, err := git.PlainClone(cloneInto, false, &git.CloneOptions{
-		URL:      cloneURL,
-		Progress: os.Stdout,
-		Depth:    1,
-	})
-	if err != nil {
-		log.Fatalf("cloning '%s': %v", cloneURL, err)
+func isHex(s string) bool {
+	for _, r := range s {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f')) {
+			return false
+		}
 	}
-
-	workflowsFolder := filepath.Join(cloneInto, ".github/workflows")
-	ListFiles(workflowsFolder)
-	// TODO: eventually remove tmp folder
-}
-
-func ListFiles(directory string) error {
-	d, err := os.Open(directory)
-	if err != nil {
-		return fmt.Errorf("opening directory: %w", err)
-	}
-	defer d.Close()
-
-	files, err := d.Readdir(-1)
-	if err != nil {
-		return fmt.Errorf("reading directory: %w", err)
-	}
-
-	log.Println("Files in directory:")
-	for _, file := range files {
-		log.Println(file.Name())
-	}
-	return nil
+	return true
 }
