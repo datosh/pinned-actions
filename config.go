@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Config struct {
 	PerPage     int
 	MaxPages    int
@@ -16,4 +18,14 @@ func NewConfig() *Config {
 		DownloadDir: "/tmp/pinned",
 		ResultFile:  "result.json",
 	}
+}
+
+func (c Config) String() string {
+	s := ""
+	s += "PerPage: " + fmt.Sprint(c.PerPage) + "\n"
+	s += "MaxPages: " + fmt.Sprint(c.MaxPages) + "\n"
+	s += "Query: " + c.Query + "\n"
+	s += "DownloadDir: " + c.DownloadDir + "\n"
+	s += "ResultFile: " + c.ResultFile + "\n"
+	return s
 }

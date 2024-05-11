@@ -14,7 +14,9 @@ import (
 )
 
 func main() {
-	config := NewConfig()
+	config := ParseArgs()
+	log.Printf("Configuration:\n%s", config)
+
 	client := github.NewClient(nil)
 
 	ctx := context.Background()
@@ -35,7 +37,7 @@ func main() {
 			select {
 
 			case repo := <-downloaded:
-				analysis, err := AnalyseRepository(*config, repo)
+				analysis, err := AnalyseRepository(config, repo)
 				if err != nil {
 					log.Fatalf("analysing repository: %v", err)
 				}

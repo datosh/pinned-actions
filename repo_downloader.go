@@ -12,11 +12,11 @@ import (
 
 type RepositoryDownloader struct {
 	client     *github.Client
-	config     *Config
+	config     Config
 	downloaded chan string
 }
 
-func NewRepositoryDownloader(client *github.Client, config *Config) *RepositoryDownloader {
+func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDownloader {
 	return &RepositoryDownloader{
 		client: client,
 		config: config,
