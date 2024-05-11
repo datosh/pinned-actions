@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/google/go-github/v60/github"
 	"github.com/stacklok/frizbee/pkg/ghactions"
@@ -16,29 +19,53 @@ func main() {
 
 	ctx := context.Background()
 
+	done := make(chan bool)
 	downloaded := make(chan string)
 	downloader := NewRepositoryDownloader(client, config)
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	go func() {
-		log.Println("Waiting for downloads")
+		defer wg.Done()
+
+		var analyzed []Analysis
+
 		for {
 			select {
+
 			case repo := <-downloaded:
 				analysis, err := AnalyseRepository(*config, repo)
 				if err != nil {
 					log.Fatalf("analysing repository: %v", err)
 				}
-				log.Printf("%v", analysis)
+				analyzed = append(analyzed, analysis)
+
+			case <-done:
+				resultFile, err := os.Create(config.ResultFile)
+				if err != nil {
+					log.Fatalf("creating output file: %v", err)
+				}
+
+				json.NewEncoder(resultFile).Encode(analyzed)
+
+				return
 			}
 		}
 	}()
 
-	err := downloader.Download(ctx, downloaded)
-	if err != nil {
-		log.Fatalf("downloading: %v", err)
-	}
+	go func() {
+		defer wg.Done()
 
-	// wait for both be done
+		err := downloader.Download(ctx, downloaded)
+		if err != nil {
+			log.Fatalf("downloading: %v", err)
+		}
+
+		done <- true
+	}()
+
+	wg.Wait()
 }
 
 func AnalyseRepository(config Config, repo string) (Analysis, error) {

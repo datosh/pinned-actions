@@ -3,9 +3,9 @@ package main
 import "fmt"
 
 type Analysis struct {
-	Repository    string
-	ActionsPinned int
-	ActionsTotal  int
+	Repository    string `json:"repository"`
+	ActionsPinned int    `json:"actions_pinned"`
+	ActionsTotal  int    `json:"actions_total"`
 }
 
 func NewAnalysis(repository string) Analysis {
