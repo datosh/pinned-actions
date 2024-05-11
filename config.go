@@ -12,7 +12,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		PerPage:     5,
+		PerPage:     100,
 		MaxPages:    1,
 		Query:       "stars:>1000",
 		DownloadDir: "/tmp/pinned",

@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"path/filepath"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v60/github"
 )
 
@@ -51,16 +52,15 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			log.Printf("Clone from: %s\n", cloneURL)
 
 			cloneInto := filepath.Join(r.config.DownloadDir, *repository.FullName)
-			log.Printf("Cloning into: %s\n", cloneInto)
+			log.Printf("Clone into: %s\n", cloneInto)
 
-			_, err := git.PlainClone(cloneInto, false, &git.CloneOptions{
-				URL:   cloneURL,
-				Depth: 1,
-			})
-			// TODO: if repo exists update instead
-			// https://github.com/go-git/go-git/blob/master/_examples/pull/main.go
-			if err != nil && err != git.ErrRepositoryAlreadyExists {
-				return fmt.Errorf("cloning repository: %w", err)
+			if !exists(cloneInto) {
+				err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
+				if err != nil {
+					return fmt.Errorf("cloning repository: %w", err)
+				}
+			} else {
+				log.Printf("Repository already exists: %s\n", cloneInto)
 			}
 
 			downloaded <- *repository.FullName
@@ -70,4 +70,16 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 	}
 
 	return nil
+}
+
+// exists returns whether the given file or directory exists
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	panic(err)
 }

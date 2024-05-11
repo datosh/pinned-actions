@@ -39,7 +39,9 @@ func main() {
 			case repo := <-downloaded:
 				analysis, err := AnalyseRepository(config, repo)
 				if err != nil {
-					log.Fatalf("analysing repository: %v", err)
+					log.Printf("[ERROR] analysing repository: %v", err)
+					// TODO: https://github.com/stacklok/frizbee/issues/77
+					continue
 				}
 				analyzed = append(analyzed, analysis)
 
@@ -73,7 +75,7 @@ func main() {
 func AnalyseRepository(config Config, repo string) (Analysis, error) {
 	analysis := NewAnalysis(repo)
 
-	repoPath := filepath.Join(config.DownloadDir, repo)
+	repoPath := filepath.Join(config.DownloadDir, repo, ".github", "workflows")
 	actions, err := ghactions.ListActionsInDirectory(repoPath)
 	if err != nil {
 		return analysis, fmt.Errorf("listing actions: %w", err)

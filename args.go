@@ -11,6 +11,7 @@ func ParseArgs() Config {
 
 	fs.StringVar(&config.DownloadDir, "download-dir", "/tmp/pinned", "path to folder where repositories will be downloaded")
 	fs.IntVar(&config.MaxPages, "max-pages", 1, "maximum number of pages to download")
+	fs.IntVar(&config.PerPage, "per-page", 100, "number of repositories to download per page")
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {
