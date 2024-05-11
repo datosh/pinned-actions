@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v62/github"
 )
 
 type RepositoryDownloader struct {
@@ -32,6 +32,8 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			PerPage: r.config.PerPage,
 		},
 	}
+
+	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	for i := 0; i < r.config.MaxPages; i++ {
 		searchResult, resp, err := r.client.Search.Repositories(ctx, r.config.Query, opts)

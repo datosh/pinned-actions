@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/go-git/go-git/v5 v5.11.0
-	github.com/google/go-github/v60 v60.0.0
+	github.com/google/go-github/v62 v62.0.0
 	github.com/stacklok/frizbee v0.0.15
 )
 
