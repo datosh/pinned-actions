@@ -51,11 +51,12 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 
 		for _, repository := range searchResult.Repositories {
+			maxStars = repository.GetStargazersCount() - 1
 			if err := r.downloadRepository(repository); err != nil {
-				return fmt.Errorf("downloading repository: %w", err)
+				log.Printf("[ERROR] downloading repository: %v", err)
+				continue
 			}
 			downloaded <- repository.GetFullName()
-			maxStars = repository.GetStargazersCount() - 1
 		}
 
 		if resp.NextPage == 0 {
@@ -80,6 +81,7 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 		return nil
 	}
 
+	// TODO: Prevent that username & password are queried. Disable TTY?
 	err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
 	if err != nil {
 		return fmt.Errorf("cloning repository: %w", err)

@@ -76,19 +76,41 @@
 
     </div>
 
-    <!-- How-to pin GH Actions-->
+    <!-- How to pin GH Actions-->
     <div class="mt-6 w-full max-w-4xl bg-white shadow p-8 rounded-lg text-center">
-        <h2 class="text-xl font-bold">How-to secure (and update) your GitHub actions?</h2>
+        <h2 class="text-xl font-bold">How to secure (and update) your GitHub actions?</h2>
 
         <p class="mt-2 text-base">Neither managing hashes nor manually updating actions is developer-friendly. Therefore, we show an <b>easy 3-step-guide</b> to take all the pain out of this process with automation tools available to the community.</p>
 
-        <h3 class="mt-4 text-l font-bold">Initial migration with Frizbee</h3>
+        <h3 class="mt-4 text-l font-bold">1. Initial migration with Frizbee</h3>
 
-        <p class="mt-2 text-base">TODO: CONTENT</p>
+        <p class="mt-2 text-base">Instead of manually looking up the digest for each tag or branch in our GitHub actions, we can use Frizbee. <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee">Frizbee is a tool you may throw a tag at and it comes back with a checksum.</a></p>
 
-        <h3 class="mt-4 text-l font-bold">Configure Dependabot to support pin-by-hash</h3>
+        <p class="mt-2 text-base">Download the latest <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee/releases">release</a> and point Frizbee at your GitHub actions folder:</p>
 
-        <p class="mt-2 text-base">TODO: CONTENT</p>
+        <div class="relative my-4 w-full max-w-3xl mx-auto">
+            <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-bash">frizbee ghactions -d path/to/your/repo/.github/workflows/</code></pre>
+        </div>
+
+        <p class="mt-2 text-base">This will replace all tags and branches with their corresponding digest, freezing your GitHub Action dependencies in time.</p>
+
+        <h3 class="mt-4 text-l font-bold">2. Configure Renovate with support for pin-by-hash</h3>
+
+        <p class="mt-2 text-base">Even when pinning our GitHub actions, we still want to receive updates, but we are in control when to apply those. Renovate has <a class="text-blue-500 hover:underline" href="https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests">build in support</a> to update GitHub actions that are pinned. It even understands <a class="text-blue-500 hover:underline" href="https://semver.org/">SemVer</a> ranges and keeps the version comment up to date, so a developer can easily keep track of the used versions.</p>
+
+        <div class="relative my-4 w-full max-w-3xl mx-auto">
+            <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-json">
+    {
+        "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+        "extends": [
+          "config:base",
+          ":preserveSemverRanges",
+          "helpers:pinGitHubActionDigests"
+        ],
+        // rest of your config
+     }
+            </code></pre>
+        </div>
 
         <h3 class="mt-4 text-l font-bold">Enforce pinned GitHub Actions with Minder</h3>
 
