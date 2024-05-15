@@ -37,11 +37,11 @@ Notes about the chosen libraries and APIs.
 
 We use the public GitHub [repository search API](https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories) to request [the most popular repositories by stars](https://github.com/search?q=stars%3A10000..500000&type=repositories&ref=advsearch&s=stars&o=desc). Although the search API support pagination, it has a limit of 100 results per page, and additionally [a limit of 1000 results per search](https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#about-search).
 
-To get around this limitation, we modify the search query after query, and only use the first page returned.
+To get around this limitation, we modify the search query after each request, and only use the first page returned.
 
 ### go-git
 
-Although `go-git` was the initial choice to clone the repositories, it was later replaced by `os/exec` and `git` due to start performance limitations of the library. See [linux-fetcher](./linux-fetcher/README.md).
+Although `go-git` was the initial choice to clone the repositories, it was later replaced by `os/exec` and `git` due to performance limitations of the library. See [linux-fetcher](./linux-fetcher/README.md).
 
 ### Parsing Actions
 
