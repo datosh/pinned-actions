@@ -2,6 +2,8 @@
 
 While researching GitHub Actions for a talk, I asked myself: "How many repositories use GitHub Actions via pin-by-hash?". As I was unable to find a tool that could answer this question, I decided to build one myself.
 
+The results are published at: [http://pin-gh-actions.kammel.dev/](http://pin-gh-actions.kammel.dev/)
+
 ## Usage
 
 ```sh
