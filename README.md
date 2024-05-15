@@ -1,24 +1,48 @@
 # Pinned Actions
 
-## Goal
+While researching GitHub Actions for a talk, I asked myself: "How many repositories use GitHub Actions via pin-by-hash?". As I was unable to find a tool that could answer this question, I decided to build one myself.
 
-Use the public [list repositories API](https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-public-repositories) to enumerate all repositories and check whether they use GitHub actions via pin-by-hash.
+## Usage
 
-Instead of doing an exhaustive search, we should start with the most popular (star count) repositories. We can use the [repository search API](https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories) for this, e.g., [https://github.com/search?q=stars%3A%3E1000&type=Repositories&ref=advsearch&l=&l=&s=stars&o=desc](https://github.com/search?q=stars%3A%3E1000&type=Repositories&ref=advsearch&l=&l=&s=stars&o=desc).
+```sh
+$ go run . --help
+Usage of GH Pinned Actions:
+  -download-dir string
+        path to folder where repositories will be downloaded (default "/tmp/pinned")
+  -max-pages int
+        maximum number of pages to download (default 1)
+  -per-page int
+        number of repositories to download per page (default 100)
+```
 
-## Estimations
+## Example
 
-As of June 2023, GitHub is estimated to host [at least 28 million public repositories](https://en.wikipedia.org/wiki/GitHub).
+To replicate the results for 10,000 repositories, run:
 
-GitHub exposes information via it's public REST API, which has a rate limit of [60 requests / hour for unauthenticated users](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#primary-rate-limit-for-unauthenticated-users) and [5000 requests / hour for authenticated users](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#primary-rate-limit-for-authenticated-users).
+```sh
+go run . -max-pages 100
+```
 
-Assuming we only need a single API request per repository:
+> [!NOTE]
+> The default download directory is `/tmp/pinned`. You can change it with the `--download-dir` flag.
 
-5.000 requests / hour * 24 = 120.000 requests / day.
-28.000.000 public repositories / 120.000 requests / day = 233 days.
+> [!WARNING]
+> Downloading 10,000 repositories will take a long time (depending on your internet connection) and **consume about 1.5TB of disk space**.
 
-This would take us the better part of a year to enumerate all public repositories.
+## Architecture
 
-## Resources
+Notes about the chosen libraries and APIs.
 
-Can we use [stacklok/frizbee](https://github.com/stacklok/frizbee/tree/main/pkg/ghactions) to reuse parsing of actions file?
+### GitHub Search API
+
+We use the public GitHub [repository search API](https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-repositories) to request [the most popular repositories by stars](https://github.com/search?q=stars%3A10000..500000&type=repositories&ref=advsearch&s=stars&o=desc). Although the search API support pagination, it has a limit of 100 results per page, and additionally [a limit of 1000 results per search](https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#about-search).
+
+To get around this limitation, we modify the search query after query, and only use the first page returned.
+
+### go-git
+
+Although `go-git` was the initial choice to clone the repositories, it was later replaced by `os/exec` and `git` due to start performance limitations of the library. See [linux-fetcher](./linux-fetcher/README.md).
+
+### Parsing Actions
+
+[stacklok/frizbee](https://github.com/stacklok/frizbee/tree/main/pkg/ghactions) already provides all the necessary tools to parse GitHub Actions. We use this library to parse the actions from the repositories.
