@@ -23,17 +23,17 @@
     </header>
 
     <!-- Chart & Result  -->
-    <div class="flex flex-col md:flex-row items-center justify-center max-w-4xl bg-white shadow p-8 rounded-lg">
+    <div class="flex flex-col md:flex-row items-center justify-center max-w-4xl bg-white shadow p-12 rounded-lg">
         <div class="w-full max-w-sm">
             <canvas id="pinnedActionsChart"></canvas>
             <div class="mt-2 text-center">
                 <a href="results-may-2024.json.tar.gz" class="text-blue-500 hover:underline">Download raw data (~70kb tar.gz)</a>
             </div>
         </div>
-        <div class="mt-6 md:mt-0 md:ml-8 text-center md:text-left">
+        <div class="mt-6 md:mt-0 md:ml-8 text-justify">
             <p class="mt-2 text-base">GitHub recommends to <a class="text-blue-500 hover:underline"
                     href="https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions">pin
-                    an action to a full length commit SHA </a> as it is currently <b>the only way to use an action as an
+                    an Action to a full length commit SHA </a> as it is currently <b>the only way to use an Action as an
                     <u>immutable</u> release.</b></p>
             <p class="mt-2 text-base">Still, <b>only ~2.5%</b> of GitHub repositories fully embrace this security
                 best practice!</p>
@@ -41,9 +41,9 @@
     </div>
 
     <!-- Motivation -->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow p-8 rounded-lg text-center">
-        <h2 class="text-xl font-bold">Why you should pin your GitHub actions?</h2>
-        <p class="mt-2 text-base">Most GitHub Action pipelines are composed of 3rd party actions. To use one, point to a git repository that hosts this action and reference a version, such as a branch (<code class="language-yaml">@main</code>) or a tag (<code class="language-yaml">@v1</code>).</p>
+    <div class="mt-6 w-full max-w-4xl bg-white shadow p-12 rounded-lg text-justify">
+        <h2 class="text-2xl font-bold text-center mb-4">Why you should pin your GitHub Actions?</h2>
+        <p class="mt-2 text-base">Most GitHub Action pipelines are composed of 3rd party Actions. To use one, point to a git repository that hosts this Action and reference a version, such as a branch (<code class="language-yaml">@main</code>) or a tag (<code class="language-yaml">@v1</code>).</p>
         <div class="relative my-4 w-full max-w-3xl mx-auto">
             <pre class="rounded-md overflow-auto bg-gray-900 p-4">
                 <code class="language-yaml">
@@ -58,8 +58,8 @@
                 href="https://github.com/actions/checkout/tree/v4">v4 tag</a> in the <a
                 class="text-blue-500 hover:underline" href="https://github.com/actions/checkout">actions/checkout</a>
             GitHub repository.</p>
-        <p class="mt-2 text-base">Referencing a branch is a <b>mutable reference</b>, meaning that the action will change as the branch is updated.</p>
-        <p class="mt-2 text-base">A less known fact is that <b>a tag is also a mutable reference</b>. The maintainer of a repository (or a malicious attacker) can delete a tag and create a new one with the same name, effectively changing the action that is being used. This machasism is used by the actions/checkout maintainers to <a class="text-blue-500 hover:underline" href="https://github.com/actions/checkout/blob/v4/.github/workflows/update-main-version.yml">always point the @v4 tag to the latest version</a> of the action.</p>
+        <p class="mt-2 text-base">Referencing a branch is a <b>mutable reference</b>, meaning that the Action will change as the branch is updated.</p>
+        <p class="mt-2 text-base">A less known fact is that <b>a tag is also a mutable reference</b>. The maintainer of a repository (or a malicious attacker) can delete a tag and create a new one with the same name, effectively changing the Action that is being used. This machasism is used by the Actions/checkout maintainers to <a class="text-blue-500 hover:underline" href="https://github.com/actions/checkout/blob/v4/.github/workflows/update-main-version.yml">always point the @v4 tag to the latest version</a> of the action.</p>
 
         <p class="mt-2 text-base">To avoid this, <b>reference a specific commit hash, an immutable reference.</b> The action will always be the same, even if the tag is deleted.</p>
 
@@ -77,16 +77,16 @@
     </div>
 
     <!-- How to pin GH Actions-->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow p-8 rounded-lg text-center">
-        <h2 class="text-xl font-bold">How to secure (and update) your GitHub actions?</h2>
+    <div class="mt-6 w-full max-w-4xl bg-white shadow p-12 rounded-lg text-justify">
+        <h2 class="text-2xl font-bold text-center">How to secure (and update) your GitHub Actions?</h2>
 
-        <p class="mt-2 text-base">Neither managing hashes nor manually updating actions is developer-friendly. Therefore, we show an <b>easy 3-step-guide</b> to take all the pain out of this process with automation tools available to the community.</p>
+        <p class="mt-2 text-base">Neither managing hashes nor manually updating Actions is fun or developer-friendly. We take the pain out of this process with tools and automations available to the community.</p>
 
-        <h3 class="mt-4 text-l font-bold">1. Initial migration with Frizbee</h3>
+        <h3 class="mt-4 text-xl font-bold">1. Migrate with Frizbee</h3>
 
-        <p class="mt-2 text-base">Instead of manually looking up the digest for each tag or branch in our GitHub actions, we can use Frizbee. <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee">Frizbee is a tool you may throw a tag at and it comes back with a checksum.</a></p>
+        <p class="mt-2 text-base">Instead of manually looking up the digest for each tag or branch in our GitHub Actions, we can use Frizbee. <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee">Frizbee is a tool you may throw a tag at and it comes back with a checksum.</a></p>
 
-        <p class="mt-2 text-base">Download the latest <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee/releases">release</a> and point Frizbee at your GitHub actions folder:</p>
+        <p class="mt-2 text-base">Download the latest <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee/releases">release</a> and point Frizbee at your GitHub Actions folder:</p>
 
         <div class="relative my-4 w-full max-w-3xl mx-auto">
             <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-bash">frizbee ghactions -d path/to/your/repo/.github/workflows/</code></pre>
@@ -94,9 +94,11 @@
 
         <p class="mt-2 text-base">This will replace all tags and branches with their corresponding digest, freezing your GitHub Action dependencies in time.</p>
 
-        <h3 class="mt-4 text-l font-bold">2. Configure Renovate with support for pin-by-hash</h3>
+        <h3 class="mt-4 text-xl font-bold">2. Update pinned Actions with Renovate</h3>
 
-        <p class="mt-2 text-base">Even when pinning our GitHub actions, we still want to receive updates, but we are in control when to apply those. Renovate has <a class="text-blue-500 hover:underline" href="https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests">build in support</a> to update GitHub actions that are pinned. It even understands <a class="text-blue-500 hover:underline" href="https://semver.org/">SemVer</a> ranges and keeps the version comment up to date, so a developer can easily keep track of the used versions.</p>
+        <p class="mt-2 text-base">Even when pinning our GitHub Actions, we still want to receive updates, but we are in control when to apply those. Renovate has <a class="text-blue-500 hover:underline" href="https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests">build in support</a> to update GitHub Actions that are pinned. It even understands <a class="text-blue-500 hover:underline" href="https://semver.org/">SemVer</a> ranges and keeps the version comment up to date, so a developer can easily keep track of the used versions.</p>
+
+        <p class="mt-2 text-base">Simply add these setting to your <b>renovate.json</b>:</p>
 
         <div class="relative my-4 w-full max-w-3xl mx-auto">
             <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-json">
@@ -112,18 +114,16 @@
             </code></pre>
         </div>
 
-        <h3 class="mt-4 text-l font-bold">Enforce pinned GitHub Actions with Minder</h3>
-
-        <p class="mt-2 text-base">TODO: CONTENT</p>
-
     </div>
 
     <!-- Limitations -->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow p-8 rounded-lg text-center">
-        <h2 class="text-xl font-bold">Known Limitations</h2>
-        <ul class="list-disc list-inside mt-2 text-left mx-auto max-w-md text-base">
-            <li><a class="text-blue-500 hover:underline" href="https://www.paloaltonetworks.com/blog/prisma-cloud/unpinnable-actions-github-security/">Unpinnable Actions</a></li>
-        </ul>
+    <div class="mt-6 w-full max-w-4xl bg-white shadow p-8 rounded-lg text-justify">
+        <h2 class="text-2xl font-bold text-center">Known Limitations</h2>
+
+        <p class="mt-2 text-base">Pinning GitHub Actions will not protect us from all attacks. It is important to understand which risks remain.</p>
+
+        <p class="mt-2 text-base">A blog post by PaloAlto Networks <a class="text-blue-500 hover:underline" href="https://www.paloaltonetworks.com/blog/prisma-cloud/unpinnable-actions-github-security/">Unpinnable Actions: How Malicious Code Can Sneak into Your GitHub Actions Workflows</a> demonstrates that dependencies can still introduce breaking changes or have the potential to introduce malicious code into our pipelines.</p>
+
     </div>
 
 </body>

@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: ['Pinned', 'Partially-pinned', 'Un-pinned'],
                 datasets: [{
                     data: [data.pinned, data['partially-pinned'], data.unpinned],
-                    backgroundColor: ['#A7F3D0', '#FDE68A', '#FECACA'],
-                    borderColor: ['#10B981', '#FBBF24', '#F87171'],
+                    backgroundColor: ['#5D8234', '#FFD23F', '#C64756'],
+                    // borderColor: ['#10B981', '#FBBF24', '#F87171'],
                     borderWidth: 1
                 }]
             };
