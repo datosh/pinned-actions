@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Pinned Actions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+
+<body class="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
+    <header class="w-full bg-white shadow p-4 mb-8">
+        <h1 class="text-3xl font-bold text-center">GitHub Pinned Actions</h1>
+    </header>
+    <div class="flex flex-col md:flex-row items-center justify-center w-full max-w-4xl bg-white shadow p-6 rounded-lg">
+        <div class="w-full max-w-md">
+            <canvas id="pinnedActionsChart"></canvas>
+            <div class="mt-4 text-center">
+                <a href="results-may-2024.json.tar.gz" class="text-blue-500 hover:underline">Download raw data
+                    (results.json.tar.gz)</a>
+            </div>
+        </div>
+        <div class="mt-8 md:mt-0 md:ml-8 text-center md:text-left">
+            <p class="mt-2">GitHub recommends to <a class="text-blue-500 hover:underline"
+                    href="https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions">pin
+                    an action to a full length commit SHA </a> as it <b>is currently the only way to use an action as an
+                    immutable release.</b></p>
+
+            <p class="mt-2 font-bold">Still, only 3% of GitHub repositories follow this security best practice!</p>
+        </div>
+    </div>
+    <div class="mt-8 w-full max-w-4xl bg-white shadow p-6 rounded-lg text-center">
+        <h2 class="text-xl font-bold">Why should you pin your GitHub actions?</h2>
+        <ul class="list-disc list-inside mt-2 text-left mx-auto max-w-md">
+            <li>Stable pipelines</li>
+            <li>Improved security</li>
+        </ul>
+    </div>
+    <div class="mt-8 w-full max-w-4xl bg-white shadow p-6 rounded-lg text-center">
+        <h2 class="text-xl font-bold">How-to secure your GitHub actions?</h2>
+        <ul class="list-disc list-inside mt-2 text-left mx-auto max-w-md">
+            <li>Frizbee to migrate</li>
+            <li>Dependabot to keep up to date</li>
+            <li>Minder to enforce policy</li>
+        </ul>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
