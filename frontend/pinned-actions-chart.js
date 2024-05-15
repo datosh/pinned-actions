@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = data.pinned + data['partially-pinned'] + data.unpinned;
             const ctx = document.getElementById('pinnedActionsChart').getContext('2d');
             const chartData = {
-                labels: ['Pinned', 'Partially-pinned', 'Un-pinned'],
+                labels: ['Fully Pinned', 'Partially Pinned', 'Unpinned'],
                 datasets: [{
                     data: [data.pinned, data['partially-pinned'], data.unpinned],
                     backgroundColor: ['#5D8234', '#FFD23F', '#C64756'],
