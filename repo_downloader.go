@@ -25,6 +25,8 @@ func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDo
 }
 
 func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan string) error {
+	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+
 	opts := &github.SearchOptions{
 		Sort:  "stars",
 		Order: "desc",
@@ -33,10 +35,13 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		},
 	}
 
-	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+	maxStars := 500000
+	minStars := 1000
 
 	for i := 0; i < r.config.MaxPages; i++ {
-		searchResult, resp, err := r.client.Search.Repositories(ctx, r.config.Query, opts)
+		query := buildQuery(minStars, maxStars)
+		log.Printf("Searching repos with: %s\n", query)
+		searchResult, resp, err := r.client.Search.Repositories(ctx, query, opts)
 		if err != nil {
 			return fmt.Errorf("searching repositories: %w", err)
 		}
@@ -46,29 +51,38 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 
 		for _, repository := range searchResult.Repositories {
-			if *repository.Fork {
-				continue
+			if err := r.downloadRepository(repository); err != nil {
+				return fmt.Errorf("downloading repository: %w", err)
 			}
-
-			cloneURL := repository.GetCloneURL()
-			log.Printf("Clone from: %s\n", cloneURL)
-
-			cloneInto := filepath.Join(r.config.DownloadDir, *repository.FullName)
-			log.Printf("Clone into: %s\n", cloneInto)
-
-			if !exists(cloneInto) {
-				err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
-				if err != nil {
-					return fmt.Errorf("cloning repository: %w", err)
-				}
-			} else {
-				log.Printf("Repository already exists: %s\n", cloneInto)
-			}
-
-			downloaded <- *repository.FullName
+			downloaded <- repository.GetFullName()
+			maxStars = repository.GetStargazersCount() - 1
 		}
 
-		opts.Page = resp.NextPage
+		if resp.NextPage == 0 {
+			log.Printf("Handled all pages after %d requests.\n", i+1)
+			break
+		}
+	}
+
+	return nil
+}
+
+func (r *RepositoryDownloader) downloadRepository(repository *github.Repository) error {
+	cloneURL := repository.GetCloneURL()
+	log.Printf("Clone from: %s\n", cloneURL)
+
+	cloneInto := filepath.Join(r.config.DownloadDir, *repository.FullName)
+	log.Printf("Clone into: %s\n", cloneInto)
+
+	if exists(cloneInto) {
+		log.Printf("Repository already exists: %s\n", cloneInto)
+		// TODO: Fetch latest changes
+		return nil
+	}
+
+	err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
+	if err != nil {
+		return fmt.Errorf("cloning repository: %w", err)
 	}
 
 	return nil
@@ -84,4 +98,8 @@ func exists(path string) bool {
 		return false
 	}
 	panic(err)
+}
+
+func buildQuery(minStars, maxStars int) string {
+	return fmt.Sprintf("stars:%d..%d", minStars, maxStars)
 }
