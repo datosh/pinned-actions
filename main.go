@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stacklok/frizbee/pkg/replacer"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
 	"github.com/google/go-github/v62/github"
-	"github.com/stacklok/frizbee/pkg/ghactions"
+	fzconfig "github.com/stacklok/frizbee/pkg/utils/config"
 )
 
 func main() {
@@ -51,7 +52,10 @@ func main() {
 					log.Fatalf("creating output file: %v", err)
 				}
 
-				json.NewEncoder(resultFile).Encode(analyzed)
+				err = json.NewEncoder(resultFile).Encode(analyzed)
+				if err != nil {
+					log.Fatalf("encoding output file: %v", err)
+				}
 
 				return
 			}
@@ -76,12 +80,16 @@ func AnalyseRepository(config Config, repo string) (Analysis, error) {
 	analysis := NewAnalysis(repo)
 
 	repoPath := filepath.Join(config.DownloadDir, repo, ".github", "workflows")
-	actions, err := ghactions.ListActionsInDirectory(repoPath)
+
+	// Create a new Frizbee instance
+	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
+
+	actions, err := r.ListPath(repoPath)
 	if err != nil {
 		return analysis, fmt.Errorf("listing actions: %w", err)
 	}
 
-	for _, action := range actions {
+	for _, action := range actions.Entities {
 		if len(action.Ref) == 40 && isHex(action.Ref) {
 			analysis.CountPinned()
 		} else {
