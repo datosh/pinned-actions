@@ -12,9 +12,8 @@ import (
 )
 
 type RepositoryDownloader struct {
-	client     *github.Client
-	config     Config
-	downloaded chan string //nolint:unused
+	client *github.Client
+	config Config
 }
 
 func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDownloader {
