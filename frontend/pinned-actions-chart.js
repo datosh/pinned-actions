@@ -2,12 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('pinned.json')
         .then(response => response.json())
         .then(data => {
-            const total = data.pinned + data['partially-pinned'] + data.unpinned;
+            // For now, let's use 2024 data as default
+            // You can modify this to show a specific year or add year selection
+            const yearData = data['2024'];
+            const total = yearData.pinned + yearData['partially-pinned'] + yearData.unpinned;
             const ctx = document.getElementById('pinnedActionsChart').getContext('2d');
             const chartData = {
                 labels: ['Fully Pinned', 'Partially Pinned', 'Unpinned'],
                 datasets: [{
-                    data: [data.pinned, data['partially-pinned'], data.unpinned],
+                    data: [yearData.pinned, yearData['partially-pinned'], yearData.unpinned],
                     backgroundColor: ['#5D8234', '#FFD23F', '#C64756'],
                     // borderColor: ['#10B981', '#FBBF24', '#F87171'],
                     borderWidth: 1

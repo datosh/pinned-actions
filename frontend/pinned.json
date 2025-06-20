@@ -1,5 +1,12 @@
 {
-    "pinned": 112,
-    "partially-pinned": 639,
-    "unpinned": 4739
+    "2024": {
+        "pinned": 112,
+        "partially-pinned": 639,
+        "unpinned": 4739
+    },
+    "2025": {
+        "pinned": 200,
+        "partially-pinned": 949,
+        "unpinned": 4980
+    }
 }
