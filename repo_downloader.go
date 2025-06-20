@@ -7,9 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 
 	"github.com/google/go-github/v62/github"
 )
+
+var blockedRepos = []string{
+	"cdnjs/cdnjs",
+}
 
 type RepositoryDownloader struct {
 	client *github.Client
@@ -68,6 +73,10 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 }
 
 func (r *RepositoryDownloader) downloadRepository(repository *github.Repository) error {
+	if slices.Contains(blockedRepos, repository.GetFullName()) {
+		return fmt.Errorf("repository %s is blocked", repository.GetFullName())
+	}
+
 	cloneURL := repository.GetCloneURL()
 	log.Printf("Clone from: %s\n", cloneURL)
 
@@ -83,7 +92,7 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 	// TODO: Prevent that username & password are queried. Disable TTY?
 	err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
 	if err != nil {
-		return fmt.Errorf("cloning repository: %w", err)
+		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
 	}
 
 	return nil
