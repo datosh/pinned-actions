@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":separateMajorReleases",
+    ":preserveSemverRanges"
+  ],
+  "commitMessagePrefix": "fix(deps): ",
+  "addLabels": ["dependencies"],
+
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "packageRules": [
+    {
+      "groupName": "Go",
+      "matchDatasources": ["go"]
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchDatasources": ["github-actions"]
+    }
+  ]
+}
