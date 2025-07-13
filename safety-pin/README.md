@@ -50,11 +50,13 @@ Thanks!
 
 ... to be determined ...
 
+## Statistics
+
++ https://github.com/cloudnative-pg/cloudnative-pg/pull/8023
+
 ## Feedback
 
 We will collect the project's feedback here to improve the process.
-
-
 
 ## TODO
 
