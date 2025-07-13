@@ -6,6 +6,8 @@ type Analysis struct {
 	Repository    string `json:"repository"`
 	ActionsPinned int    `json:"actions_pinned"`
 	ActionsTotal  int    `json:"actions_total"`
+	HasRenovate   bool   `json:"has_renovate"`
+	HasDependabot bool   `json:"has_dependabot"`
 }
 
 func NewAnalysis(repository string) Analysis {
@@ -13,6 +15,8 @@ func NewAnalysis(repository string) Analysis {
 		Repository:    repository,
 		ActionsPinned: 0,
 		ActionsTotal:  0,
+		HasRenovate:   false,
+		HasDependabot: false,
 	}
 }
 
@@ -26,5 +30,12 @@ func (a *Analysis) CountUnpinned() {
 }
 
 func (a Analysis) String() string {
-	return fmt.Sprintf("%s: %d/%d", a.Repository, a.ActionsPinned, a.ActionsTotal)
+	updater := "None"
+	if a.HasRenovate {
+		updater = "Renovate"
+	}
+	if a.HasDependabot {
+		updater = "Dependabot"
+	}
+	return fmt.Sprintf("%s: %d/%d (%s)", a.Repository, a.ActionsPinned, a.ActionsTotal, updater)
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/stacklok/frizbee/pkg/replacer"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
+
+	"github.com/stacklok/frizbee/pkg/replacer"
 
 	"github.com/google/go-github/v62/github"
 	fzconfig "github.com/stacklok/frizbee/pkg/utils/config"
@@ -79,12 +81,13 @@ func main() {
 func AnalyseRepository(config Config, repo string) (Analysis, error) {
 	analysis := NewAnalysis(repo)
 
-	repoPath := filepath.Join(config.DownloadDir, repo, ".github", "workflows")
+	repoPath := filepath.Join(config.DownloadDir, repo)
+	workflowsPath := filepath.Join(repoPath, ".github", "workflows")
 
 	// Create a new Frizbee instance
 	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
 
-	actions, err := r.ListPath(repoPath)
+	actions, err := r.ListPath(workflowsPath)
 	if err != nil {
 		return analysis, fmt.Errorf("listing actions: %w", err)
 	}
@@ -95,6 +98,29 @@ func AnalyseRepository(config Config, repo string) (Analysis, error) {
 		} else {
 			analysis.CountUnpinned()
 		}
+	}
+
+	// https://docs.renovatebot.com/configuration-options/
+	renovatePaths := []string{
+		filepath.Join(repoPath, "renovate.json"),
+		filepath.Join(repoPath, "renovate.json5"),
+		filepath.Join(repoPath, ".github", "renovate.json"),
+		filepath.Join(repoPath, ".github", "renovate.json5"),
+		filepath.Join(repoPath, ".gitlab", "renovate.json"),
+		filepath.Join(repoPath, ".gitlab", "renovate.json5"),
+		filepath.Join(repoPath, ".renovaterc"),
+		filepath.Join(repoPath, ".renovaterc.json"),
+		filepath.Join(repoPath, ".renovaterc.json5"),
+	}
+
+	renovate := slices.ContainsFunc(renovatePaths, func(path string) bool {
+		return exists(path)
+	})
+	analysis.HasRenovate = renovate
+
+	dependabotPath := filepath.Join(repoPath, ".github", "dependabot.yml")
+	if exists(dependabotPath) {
+		analysis.HasDependabot = true
 	}
 
 	return analysis, nil
