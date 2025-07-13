@@ -1,0 +1,18 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    - name: Some OCI
+      uses: docker://namespace/repo:2.4

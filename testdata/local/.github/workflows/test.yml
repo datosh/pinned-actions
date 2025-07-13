@@ -1,0 +1,18 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    - name: Some local action
+      uses: ./some/local/action
