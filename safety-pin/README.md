@@ -43,8 +43,14 @@ Thanks!
 
 ### Implementation
 
-1. Run fizbee
-1. Check version comments
+1. List actions with frizbee
+  ```sh
+  frizbee actions list
+  ```
+1. Migrate to pinned actions
+  ```sh
+  frizbee actions
+  ```
 
 ### PR Template
 

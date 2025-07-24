@@ -8,7 +8,7 @@
   },
   {
     "repository": "cilium/cilium",
-    "actions_pinned": 43,
+    "actions_pinned": 48,
     "actions_total": 49,
     "has_renovate": true,
     "has_dependabot": false
@@ -21,29 +21,8 @@
     "has_dependabot": false
   },
   {
-    "repository": "hashicorp/terraform-provider-kubernetes",
-    "actions_pinned": 36,
-    "actions_total": 39,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "cilium/tetragon",
-    "actions_pinned": 34,
-    "actions_total": 36,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "immich-app/immich",
     "actions_pinned": 33,
-    "actions_total": 34,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "grafana/alloy",
-    "actions_pinned": 32,
     "actions_total": 34,
     "has_renovate": true,
     "has_dependabot": false
@@ -59,13 +38,6 @@
     "repository": "element-hq/element-web",
     "actions_pinned": 29,
     "actions_total": 43,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "truecharts/public",
-    "actions_pinned": 27,
-    "actions_total": 30,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -98,72 +70,9 @@
     "has_dependabot": false
   },
   {
-    "repository": "wabarc/wayback",
-    "actions_pinned": 25,
-    "actions_total": 49,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "kumahq/kuma",
-    "actions_pinned": 25,
-    "actions_total": 27,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "DefectDojo/django-DefectDojo",
-    "actions_pinned": 25,
-    "actions_total": 31,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "projectcapsule/capsule",
-    "actions_pinned": 24,
-    "actions_total": 25,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "edgelesssys/constellation",
-    "actions_pinned": 23,
-    "actions_total": 24,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "openclarity/openclarity",
-    "actions_pinned": 23,
-    "actions_total": 24,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "grafana/grafana",
     "actions_pinned": 23,
     "actions_total": 63,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "hcavarsan/kftray",
-    "actions_pinned": 22,
-    "actions_total": 23,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "grafbase/grafbase",
-    "actions_pinned": 22,
-    "actions_total": 29,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "hashintel/hash",
-    "actions_pinned": 22,
-    "actions_total": 23,
     "has_renovate": true,
     "has_dependabot": true
   },
@@ -175,58 +84,9 @@
     "has_dependabot": true
   },
   {
-    "repository": "nuxt/nuxt",
-    "actions_pinned": 22,
-    "actions_total": 23,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "element-hq/element-desktop",
-    "actions_pinned": 21,
-    "actions_total": 32,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "matrix-org/matrix-js-sdk",
-    "actions_pinned": 20,
-    "actions_total": 31,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "parca-dev/parca",
-    "actions_pinned": 20,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "google/osv-scanner",
     "actions_pinned": 20,
     "actions_total": 26,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "mui/pigment-css",
-    "actions_pinned": 19,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "DataDog/datadog-agent",
-    "actions_pinned": 19,
-    "actions_total": 20,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "camunda/camunda",
-    "actions_pinned": 19,
-    "actions_total": 82,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -241,27 +101,6 @@
     "repository": "angular/angular",
     "actions_pinned": 19,
     "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "release-plz/release-plz",
-    "actions_pinned": 18,
-    "actions_total": 19,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "go-vikunja/vikunja",
-    "actions_pinned": 18,
-    "actions_total": 23,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "open-telemetry/opentelemetry-go",
-    "actions_pinned": 18,
-    "actions_total": 19,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -287,16 +126,9 @@
     "has_dependabot": false
   },
   {
-    "repository": "rustic-rs/rustic",
+    "repository": "sourcegraph/sourcegraph-public-snapshot",
     "actions_pinned": 17,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "grafana/mimir",
-    "actions_pinned": 17,
-    "actions_total": 29,
+    "actions_total": 41,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -315,39 +147,11 @@
     "has_dependabot": false
   },
   {
-    "repository": "GoogleCloudPlatform/cloud-foundation-toolkit",
-    "actions_pinned": 16,
-    "actions_total": 19,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "onetimesecret/onetimesecret",
-    "actions_pinned": 16,
-    "actions_total": 17,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "GoogleCloudPlatform/nodejs-docs-samples",
-    "actions_pinned": 16,
-    "actions_total": 18,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "mui/mui-x",
     "actions_pinned": 16,
     "actions_total": 24,
     "has_renovate": true,
     "has_dependabot": true
-  },
-  {
-    "repository": "sourcegraph/sourcegraph-public-snapshot",
-    "actions_pinned": 16,
-    "actions_total": 41,
-    "has_renovate": true,
-    "has_dependabot": false
   },
   {
     "repository": "withastro/astro",
@@ -364,81 +168,11 @@
     "has_dependabot": true
   },
   {
-    "repository": "rancher/fleet",
-    "actions_pinned": 15,
-    "actions_total": 20,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "jkroepke/helm-secrets",
-    "actions_pinned": 15,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "google/osv.dev",
-    "actions_pinned": 15,
-    "actions_total": 17,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "submariner-io/submariner",
-    "actions_pinned": 15,
-    "actions_total": 20,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "streamyfin/streamyfin",
-    "actions_pinned": 15,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "prefix-dev/pixi",
-    "actions_pinned": 15,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "k8sgpt-ai/k8sgpt",
     "actions_pinned": 15,
     "actions_total": 17,
     "has_renovate": true,
     "has_dependabot": false
-  },
-  {
-    "repository": "jaegertracing/jaeger-ui",
-    "actions_pinned": 14,
-    "actions_total": 19,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "open-telemetry/opentelemetry-ebpf-profiler",
-    "actions_pinned": 14,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "liam-hq/liam",
-    "actions_pinned": 14,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "mui/base-ui",
-    "actions_pinned": 14,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": true
   },
   {
     "repository": "bitwarden/android",
@@ -469,27 +203,6 @@
     "has_dependabot": true
   },
   {
-    "repository": "drasi-project/drasi-platform",
-    "actions_pinned": 13,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "onedr0p/home-ops",
-    "actions_pinned": 13,
-    "actions_total": 14,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "dev-sec/ansible-collection-hardening",
-    "actions_pinned": 13,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "web-infra-dev/rspack",
     "actions_pinned": 13,
     "actions_total": 16,
@@ -504,53 +217,11 @@
     "has_dependabot": false
   },
   {
-    "repository": "element-hq/element-x-android",
-    "actions_pinned": 12,
-    "actions_total": 22,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "android-password-store/Android-Password-Store",
-    "actions_pinned": 12,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "curl/curl",
     "actions_pinned": 12,
     "actions_total": 13,
     "has_renovate": true,
     "has_dependabot": true
-  },
-  {
-    "repository": "apache/polaris",
-    "actions_pinned": 11,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "mui/toolpad",
-    "actions_pinned": 11,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "prometheus-community/windows_exporter",
-    "actions_pinned": 11,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "glasskube/glasskube",
-    "actions_pinned": 11,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
   },
   {
     "repository": "withastro/starlight",
@@ -567,27 +238,6 @@
     "has_dependabot": true
   },
   {
-    "repository": "GoogleCloudPlatform/functions-framework-nodejs",
-    "actions_pinned": 10,
-    "actions_total": 11,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "nextest-rs/nextest",
-    "actions_pinned": 10,
-    "actions_total": 19,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "MALSync/MALSync",
-    "actions_pinned": 10,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "kubernetes-sigs/external-dns",
     "actions_pinned": 10,
     "actions_total": 21,
@@ -600,34 +250,6 @@
     "actions_total": 19,
     "has_renovate": true,
     "has_dependabot": false
-  },
-  {
-    "repository": "grafana/docker-otel-lgtm",
-    "actions_pinned": 9,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "neuvector/neuvector",
-    "actions_pinned": 9,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "open-telemetry/opentelemetry-go-contrib",
-    "actions_pinned": 9,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "konstruktoid/hardening",
-    "actions_pinned": 9,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": true
   },
   {
     "repository": "googleapis/genai-toolbox",
@@ -644,86 +266,9 @@
     "has_dependabot": true
   },
   {
-    "repository": "square/anvil",
-    "actions_pinned": 8,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "astral-sh/ruff-vscode",
-    "actions_pinned": 8,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "onedr0p/cluster-template",
-    "actions_pinned": 8,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "graphql-hive/graphql-yoga",
     "actions_pinned": 8,
     "actions_total": 14,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kantord/SeaGOAT",
-    "actions_pinned": 7,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "uxlfoundation/scikit-learn-intelex",
-    "actions_pinned": 7,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "withastro/docs",
-    "actions_pinned": 7,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "pact-foundation/pact-js",
-    "actions_pinned": 7,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "miraclx/freyr-js",
-    "actions_pinned": 7,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "JoshuaKGoldberg/TypeStat",
-    "actions_pinned": 7,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "scratchfoundation/scratch-blocks",
-    "actions_pinned": 7,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "HuLaSpark/HuLa",
-    "actions_pinned": 7,
-    "actions_total": 17,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -738,55 +283,6 @@
     "repository": "vitest-dev/vitest",
     "actions_pinned": 7,
     "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "matrix-org/matrix-react-sdk",
-    "actions_pinned": 6,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "JoshuaKGoldberg/create-typescript-app",
-    "actions_pinned": 6,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "polarsignals/frostdb",
-    "actions_pinned": 6,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "scratchfoundation/scratch-www",
-    "actions_pinned": 6,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "prettier/pretty-quick",
-    "actions_pinned": 6,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "coreruleset/coreruleset",
-    "actions_pinned": 6,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "ardatan/graphql-mesh",
-    "actions_pinned": 6,
-    "actions_total": 11,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -808,97 +304,6 @@
     "repository": "dotansimha/graphql-code-generator",
     "actions_pinned": 6,
     "actions_total": 11,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "elastic/ecs",
-    "actions_pinned": 5,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "square/workflow-kotlin",
-    "actions_pinned": 5,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "TNG/ArchUnitNET",
-    "actions_pinned": 5,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "balena-io/open-balena",
-    "actions_pinned": 5,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "camunda/camunda-modeler",
-    "actions_pinned": 5,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "catppuccin/vscode",
-    "actions_pinned": 5,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "python-social-auth/social-app-django",
-    "actions_pinned": 5,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "cinnyapp/cinny",
-    "actions_pinned": 5,
-    "actions_total": 14,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "open-telemetry/opentelemetry-js",
-    "actions_pinned": 5,
-    "actions_total": 17,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "prettier/prettier-eslint",
-    "actions_pinned": 5,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "hengyoush/kyanos",
-    "actions_pinned": 5,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "firebase/firebase-js-sdk",
-    "actions_pinned": 5,
-    "actions_total": 14,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "loopbackio/loopback-next",
-    "actions_pinned": 5,
-    "actions_total": 6,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -945,41 +350,6 @@
     "has_dependabot": false
   },
   {
-    "repository": "googleapis/google-http-java-client",
-    "actions_pinned": 4,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "indirect/rails-footnotes",
-    "actions_pinned": 4,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "kubearmor/KubeArmor",
-    "actions_pinned": 4,
-    "actions_total": 29,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "googleapis/google-cloud-java",
-    "actions_pinned": 4,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "prettier/eslint-plugin-prettier",
-    "actions_pinned": 4,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
     "repository": "micronaut-projects/micronaut-core",
     "actions_pinned": 4,
     "actions_total": 22,
@@ -990,125 +360,6 @@
     "repository": "kulshekhar/ts-jest",
     "actions_pinned": 4,
     "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "procrastinate-org/procrastinate",
-    "actions_pinned": 3,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "oxidecomputer/dropshot",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "FOSSBilling/FOSSBilling",
-    "actions_pinned": 3,
-    "actions_total": 18,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "terraform-google-modules/terraform-example-foundation",
-    "actions_pinned": 3,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "lost-pixel/lost-pixel",
-    "actions_pinned": 3,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "slsa-framework/slsa",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "mainmatter/ember-simple-auth",
-    "actions_pinned": 3,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "nuxt-modules/i18n",
-    "actions_pinned": 3,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "freeCodeCamp/chapter",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "ruby-shoryuken/shoryuken",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "OpenZeppelin/ethernaut",
-    "actions_pinned": 3,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "karafka/karafka",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "prometheus/client_java",
-    "actions_pinned": 3,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "emberjs/data",
-    "actions_pinned": 3,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "sourcegraph/cody",
-    "actions_pinned": 3,
-    "actions_total": 29,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "ryoppippi/ccusage",
-    "actions_pinned": 3,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "nuxt/ui",
-    "actions_pinned": 3,
-    "actions_total": 8,
     "has_renovate": true,
     "has_dependabot": false
   },
@@ -1155,132 +406,6 @@
     "has_dependabot": false
   },
   {
-    "repository": "nautobot/nautobot",
-    "actions_pinned": 2,
-    "actions_total": 21,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "portabletext/portabletext",
-    "actions_pinned": 2,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "null2264/yokai",
-    "actions_pinned": 2,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "zmzimpl/chrome-power-app",
-    "actions_pinned": 2,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kivy/pyjnius",
-    "actions_pinned": 2,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "owntracks/android",
-    "actions_pinned": 2,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "OpenVPN/openvpn-gui",
-    "actions_pinned": 2,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "platformatic/platformatic",
-    "actions_pinned": 2,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "IBM/fp-go",
-    "actions_pinned": 2,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "web-infra-dev/rspress",
-    "actions_pinned": 2,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/ipx",
-    "actions_pinned": 2,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "ballerine-io/ballerine",
-    "actions_pinned": 2,
-    "actions_total": 26,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "apache/grails-core",
-    "actions_pinned": 2,
-    "actions_total": 15,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "Ocramius/PackageVersions",
-    "actions_pinned": 2,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "JabRef/jabref",
-    "actions_pinned": 2,
-    "actions_total": 49,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "unjs/magic-regexp",
-    "actions_pinned": 2,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "diggerhq/digger",
-    "actions_pinned": 2,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "matter-labs/zksync",
-    "actions_pinned": 2,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
     "repository": "longhorn/longhorn",
     "actions_pinned": 2,
     "actions_total": 31,
@@ -1318,370 +443,6 @@
   {
     "repository": "elastic/elasticsearch",
     "actions_pinned": 2,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "jupp0r/prometheus-cpp",
-    "actions_pinned": 1,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "fn2006/PollyMC",
-    "actions_pinned": 1,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "Apicurio/apicurio-studio",
-    "actions_pinned": 1,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "Slimefun/Slimefun4",
-    "actions_pinned": 1,
-    "actions_total": 24,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "spotify-web-api-java/spotify-web-api-java",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "paazmaya/shuji",
-    "actions_pinned": 1,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/changelogen",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "zendeskgarden/react-components",
-    "actions_pinned": 1,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "CodeIntelligenceTesting/jazzer",
-    "actions_pinned": 1,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "SonarSource/SonarJS",
-    "actions_pinned": 1,
-    "actions_total": 11,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "nuxt-hub/core",
-    "actions_pinned": 1,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kanriapp/kanri",
-    "actions_pinned": 1,
-    "actions_total": 9,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/ufo",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "sentry-kubernetes/charts",
-    "actions_pinned": 1,
-    "actions_total": 14,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "android/wear-os-samples",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/destr",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kubetail-org/kubetail",
-    "actions_pinned": 1,
-    "actions_total": 18,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "tailcallhq/tailcall",
-    "actions_pinned": 1,
-    "actions_total": 29,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "googleapis/google-api-java-client",
-    "actions_pinned": 1,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": true
-  },
-  {
-    "repository": "scroll-into-view/scroll-into-view-if-needed",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "CorentinTh/enclosed",
-    "actions_pinned": 1,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "seek-oss/braid-design-system",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "WalletConnect/walletconnect-monorepo",
-    "actions_pinned": 1,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "posva/pinia-colada",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "zhaofengli/colmena",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "donmccurdy/glTF-Transform",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "skydoves/sandwich",
-    "actions_pinned": 1,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "netlify/cli",
-    "actions_pinned": 1,
-    "actions_total": 16,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "keptn/keptn",
-    "actions_pinned": 1,
-    "actions_total": 32,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "tauri-apps/tao",
-    "actions_pinned": 1,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kivy/buildozer",
-    "actions_pinned": 1,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "graphql-hive/graphql-scalars",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "posva/unplugin-vue-router",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "tuist/XcodeProj",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "marc2332/freya",
-    "actions_pinned": 1,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/unstorage",
-    "actions_pinned": 1,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "reactjs/React.NET",
-    "actions_pinned": 1,
-    "actions_total": 6,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "vuejs/vue-vapor",
-    "actions_pinned": 1,
-    "actions_total": 12,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/jiti",
-    "actions_pinned": 1,
-    "actions_total": 5,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "python-gitlab/python-gitlab",
-    "actions_pinned": 1,
-    "actions_total": 11,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "vuejs/devtools",
-    "actions_pinned": 1,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "intlify/vue-i18n",
-    "actions_pinned": 1,
-    "actions_total": 13,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "tuskyapp/Tusky",
-    "actions_pinned": 1,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/unbuild",
-    "actions_pinned": 1,
-    "actions_total": 3,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "nuxt/devtools",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "antinomyhq/forge",
-    "actions_pinned": 1,
-    "actions_total": 7,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "pulsar-edit/pulsar",
-    "actions_pinned": 1,
-    "actions_total": 8,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "kubeflow/pipelines",
-    "actions_pinned": 1,
-    "actions_total": 19,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "tauri-apps/wry",
-    "actions_pinned": 1,
-    "actions_total": 10,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "h3js/h3",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "unjs/ofetch",
-    "actions_pinned": 1,
-    "actions_total": 4,
-    "has_renovate": true,
-    "has_dependabot": false
-  },
-  {
-    "repository": "python/typeshed",
-    "actions_pinned": 1,
     "actions_total": 8,
     "has_renovate": true,
     "has_dependabot": false
