@@ -28,18 +28,21 @@ If the maintainer is not open to the idea, we will then close the issue.
 
 ### Issue Template
 
-I've noticed that this project is pinning some of its GitHub Action dependencies
-by referencing a commit hash. This is great, as it ensures that the workflows are
-both stable and secure. It is a security best practice,
-[endorsed by GitHub](https://docs.github.com/en/actions/how-tos/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions),
-and prevents security incidents such as
-[CVE-2025-30066](https://www.wiz.io/blog/github-action-tj-actions-changed-files-supply-chain-attack-cve-2025-30066),
-aka the "tj-actions/changed-files supply chain attack".
+I've noticed that this project is pinning most of its GitHub Action dependencies by referencing a commit hash. This is great, as it ensures that the workflows are both stable and secure. It is a security best practice, [endorsed by GitHub](https://docs.github.com/en/actions/how-tos/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions), and helps prevent security incidents such as [CVE-2025-30066](https://www.wiz.io/blog/github-action-tj-actions-changed-files-supply-chain-attack-cve-2025-30066), aka the "tj-actions/changed-files supply chain attack".
 
 I'd like to know if you're open to the idea of pinning all GitHub Action dependencies.
+
 If so, I'll be happy to create a PR to pin the remaining dependencies.
 
 Thanks!
+
+### PR Template
+
+I've noticed that this project is pinning most of its GitHub Action dependencies by referencing a commit hash. This is great, as it ensures that the workflows are both stable and secure. It is a security best practice, [endorsed by GitHub](https://docs.github.com/en/actions/how-tos/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions), and helps prevent security incidents such as [CVE-2025-30066](https://www.wiz.io/blog/github-action-tj-actions-changed-files-supply-chain-attack-cve-2025-30066), aka the "tj-actions/changed-files supply chain attack".
+
+I was not able to find any legitimate reason in the git history or issues, so I assume these were just overlooked.
+
+This PR pins the actions to match the best practice followed by the other workflows in this repository.
 
 ### Implementation
 
@@ -52,13 +55,17 @@ Thanks!
   frizbee actions
   ```
 
-### PR Template
-
-... to be determined ...
-
 ## Statistics
 
+### Merged PRs
+
 + https://github.com/cloudnative-pg/cloudnative-pg/pull/8023
+
+### Open PRs
+
++ https://github.com/hashicorp/terraform-provider-kubernetes/pull/2765
++ https://github.com/cilium/tetragon/pull/3986
++ https://github.com/element-hq/element-web/pull/30501
 
 ## Feedback
 
