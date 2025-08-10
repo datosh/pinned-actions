@@ -57,15 +57,24 @@ This PR pins the actions to match the best practice followed by the other workfl
 
 ## Statistics
 
+### Potential Repositories
+
++ grafana/grafana
++ grafana/loki (only "official" actions/)
++ hcavarsan/kftray
++ hashintel/hash
+
 ### Merged PRs
 
 + https://github.com/cloudnative-pg/cloudnative-pg/pull/8023
++ https://github.com/cilium/tetragon/pull/3986
++ https://github.com/element-hq/element-web/pull/30501
 
 ### Open PRs
 
 + https://github.com/hashicorp/terraform-provider-kubernetes/pull/2765
-+ https://github.com/cilium/tetragon/pull/3986
-+ https://github.com/element-hq/element-web/pull/30501
++ https://github.com/trueforge-org/truecharts/pull/38247
++ https://github.com/DefectDojo/django-DefectDojo/pull/12958
 
 ## Feedback
 
@@ -75,3 +84,11 @@ We will collect the project's feedback here to improve the process.
 
 Explore if we can use CodeQL to identify repositories that are partially pinned.
 + https://github.com/github/codeql/blob/main/actions/ql/src/Security/CWE-829/UnpinnedActionsTag.ql
+
+## Resources
+
+Grafana Labs team has
+[written about](https://grafana.com/blog/2025/06/26/how-to-detect-vulnerable-github-actions-at-scale-with-zizmor/)
+using Zizmor with GitHub Actions at scale. They are using a
+[central action](https://github.com/grafana/security-github-actions/blob/main/.github/workflows/self-zizmor.yaml)
+to scan all repositories in their organization.
