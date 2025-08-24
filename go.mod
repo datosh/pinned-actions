@@ -3,10 +3,10 @@ module github.com/datosh/pinned-actions
 go 1.22.0
 
 require (
-	github.com/go-git/go-git/v5 v5.13.0
+	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/go-github/v62 v62.0.0
-	github.com/stacklok/frizbee v0.0.16
-	github.com/stretchr/testify v1.10.0
+	github.com/stacklok/frizbee v0.1.7
+	github.com/stretchr/testify v1.11.0
 )
 
 require (
