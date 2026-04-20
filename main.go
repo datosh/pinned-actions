@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v85/github"
 )
 
 func main() {

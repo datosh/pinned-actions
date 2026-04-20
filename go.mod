@@ -1,10 +1,10 @@
 module github.com/datosh/pinned-actions
 
-go 1.22.0
+go 1.25.0
 
 require (
 	github.com/go-git/go-git/v5 v5.13.0
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v85 v85.0.0
 	github.com/stacklok/frizbee v0.0.16
 	github.com/stretchr/testify v1.10.0
 )
@@ -28,7 +28,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-containerregistry v0.19.1 // indirect
 	github.com/google/go-github/v61 v61.0.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
