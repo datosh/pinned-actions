@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Zizmor Security Findings</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script src="zizmor-web.js"></script>
+</head>
+
+<body class="flex flex-col items-center py-6 bg-gray-100 min-h-screen">
+
+    <!-- Title -->
+    <header class="w-full bg-white shadow-sm py-4 mb-6">
+        <h1 class="text-2xl font-bold text-center">Zizmor Security Findings</h1>
+        <p class="text-center text-gray-500 text-sm mt-1">GitHub Actions security analysis of the top 10,000 repositories</p>
+    </header>
+
+    <!-- Summary Stats -->
+    <div id="stats" class="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
+            <div id="stat-repos" class="text-3xl font-bold text-gray-800">—</div>
+            <div class="text-sm text-gray-500 mt-1">Repos Scanned</div>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
+            <div id="stat-affected" class="text-3xl font-bold text-gray-800">—</div>
+            <div class="text-sm text-gray-500 mt-1">Repos with Findings</div>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
+            <div id="stat-total" class="text-3xl font-bold text-gray-800">—</div>
+            <div class="text-sm text-gray-500 mt-1">Total Findings</div>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
+            <div id="stat-high" class="text-3xl font-bold text-red-600">—</div>
+            <div class="text-sm text-gray-500 mt-1">High Severity</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="w-full max-w-4xl flex flex-col md:flex-row gap-4 mb-6">
+        <div class="bg-white shadow-sm rounded-lg p-6 flex-1">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Top Rules by Frequency</h2>
+            <canvas id="rulesChart"></canvas>
+        </div>
+        <div class="bg-white shadow-sm rounded-lg p-6 w-full md:w-64 flex flex-col items-center">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Findings by Severity</h2>
+            <canvas id="severityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Table Controls -->
+    <div class="w-full max-w-4xl bg-white shadow-sm rounded-lg p-6 mb-2">
+        <div class="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between mb-4">
+            <input
+                id="search"
+                type="text"
+                placeholder="Search repositories..."
+                class="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <div class="flex gap-2 flex-wrap">
+                <button data-sev="all"   class="sev-btn active px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">All</button>
+                <button data-sev="High"  class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">High</button>
+                <button data-sev="Medium" class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-300">Medium</button>
+                <button data-sev="Low"   class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">Low</button>
+                <button data-sev="Informational" class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">Info</button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
+                        <th class="pb-2 pr-4 font-semibold cursor-pointer select-none" data-col="repository">Repository <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="total">Total <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="High">High <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="Medium">Medium <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="Low">Low <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="Informational">Info <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 pl-2 w-8"></th>
+                    </tr>
+                </thead>
+                <tbody id="repo-table-body">
+                    <tr><td colspan="7" class="py-8 text-center text-gray-400">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="table-footer" class="mt-3 text-xs text-gray-400"></div>
+    </div>
+
+    <!-- About -->
+    <div class="mt-4 w-full max-w-4xl bg-white shadow-sm p-8 rounded-lg text-justify">
+        <h2 class="text-xl font-bold text-center mb-3">About</h2>
+        <p class="text-base text-gray-700">
+            This page shows security findings from <a class="text-blue-500 hover:underline" href="https://github.com/woodruffw/zizmor">zizmor</a>,
+            a static analysis tool for GitHub Actions workflows. The data covers the top 10,000 GitHub repositories by stars.
+        </p>
+        <p class="mt-2 text-base text-gray-700">
+            The code to generate this data is available on
+            <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions">GitHub</a>.
+            Please <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions/issues/new">report any issue</a>.
+        </p>
+    </div>
+
+<script>
+const SEVERITY_COLORS = {
+    High:          { bg: '#C64756', light: '#fee2e2', text: '#b91c1c', border: '#fca5a5' },
+    Medium:        { bg: '#D97706', light: '#fef3c7', text: '#b45309', border: '#fcd34d' },
+    Low:           { bg: '#3B82F6', light: '#dbeafe', text: '#1d4ed8', border: '#93c5fd' },
+    Informational: { bg: '#6B7280', light: '#f3f4f6', text: '#374151', border: '#d1d5db' },
+};
+
+const SEVERITY_ORDER = ['High', 'Medium', 'Low', 'Informational'];
+
+let allData = [];
+let sortCol = 'total';
+let sortDir = -1; // -1 = desc
+let filterSev = 'all';
+let filterSearch = '';
+
+// ─── Data Loading ─────────────────────────────────────────────────────────────
+
+allData = ZIZMOR_DATA;
+renderStats(allData);
+renderCharts(allData);
+renderTable();
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+
+function renderStats(data) {
+    const totalRepos = data.length;
+    const affected = data.filter(r => r.rules.length > 0).length;
+    const total = data.reduce((s, r) => s + r.rules.reduce((ss, x) => ss + x.count, 0), 0);
+    const high = data.reduce((s, r) => s + r.rules.filter(x => x.severity === 'High').reduce((ss, x) => ss + x.count, 0), 0);
+
+    document.getElementById('stat-repos').textContent = totalRepos.toLocaleString();
+    document.getElementById('stat-affected').textContent = `${affected} (${Math.round(affected/totalRepos*100)}%)`;
+    document.getElementById('stat-total').textContent = total.toLocaleString();
+    document.getElementById('stat-high').textContent = high.toLocaleString();
+}
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+
+function renderCharts(data) {
+    // Aggregate rule counts globally
+    const ruleMap = {}; // rule -> {severity, count}
+    const sevMap = {};  // severity -> count
+
+    for (const repo of data) {
+        for (const r of repo.rules) {
+            const key = r.rule;
+            if (!ruleMap[key]) ruleMap[key] = { severity: r.severity, count: 0 };
+            ruleMap[key].count += r.count;
+
+            sevMap[r.severity] = (sevMap[r.severity] || 0) + r.count;
+        }
+    }
+
+    // Top 10 rules sorted by count
+    const topRules = Object.entries(ruleMap)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10);
+
+    new Chart(document.getElementById('rulesChart'), {
+        type: 'bar',
+        data: {
+            labels: topRules.map(([rule]) => rule),
+            datasets: [{
+                label: 'Occurrences',
+                data: topRules.map(([, v]) => v.count),
+                backgroundColor: topRules.map(([, v]) => SEVERITY_COLORS[v.severity]?.bg || '#6B7280'),
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, ticks: { precision: 0 } },
+                y: { ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+
+    const sevLabels = SEVERITY_ORDER.filter(s => sevMap[s]);
+    new Chart(document.getElementById('severityChart'), {
+        type: 'doughnut',
+        data: {
+            labels: sevLabels,
+            datasets: [{
+                data: sevLabels.map(s => sevMap[s] || 0),
+                backgroundColor: sevLabels.map(s => SEVERITY_COLORS[s]?.bg || '#6B7280'),
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } }
+            }
+        }
+    });
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+
+function sevCount(repo, sev) {
+    return repo.rules.filter(r => r.severity === sev).reduce((s, r) => s + r.count, 0);
+}
+
+function totalCount(repo) {
+    return repo.rules.reduce((s, r) => s + r.count, 0);
+}
+
+function filteredData() {
+    return allData.filter(repo => {
+        if (filterSearch && !repo.repository.toLowerCase().includes(filterSearch.toLowerCase())) return false;
+        if (filterSev !== 'all') {
+            const has = repo.rules.some(r => r.severity === filterSev && r.count > 0);
+            if (!has) return false;
+        }
+        return true;
+    });
+}
+
+function sortedData(data) {
+    return [...data].sort((a, b) => {
+        let av, bv;
+        if (sortCol === 'repository') {
+            av = a.repository; bv = b.repository;
+            return sortDir * (av < bv ? -1 : av > bv ? 1 : 0);
+        }
+        av = sortCol === 'total' ? totalCount(a) : sevCount(a, sortCol);
+        bv = sortCol === 'total' ? totalCount(b) : sevCount(b, sortCol);
+        return sortDir * (bv - av);
+    });
+}
+
+function renderTable() {
+    const data = sortedData(filteredData());
+    const tbody = document.getElementById('repo-table-body');
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">No repositories match the current filter.</td></tr>';
+        document.getElementById('table-footer').textContent = '';
+        return;
+    }
+
+    const rows = data.map(repo => {
+        const total = totalCount(repo);
+        const high   = sevCount(repo, 'High');
+        const medium = sevCount(repo, 'Medium');
+        const low    = sevCount(repo, 'Low');
+        const info   = sevCount(repo, 'Informational');
+        const rowId  = `row-${repo.repository.replace(/[^a-z0-9]/gi, '-')}`;
+
+        const badges = repo.rules.map(r => {
+            const c = SEVERITY_COLORS[r.severity] || SEVERITY_COLORS.Informational;
+            const url = `https://docs.zizmor.sh/audits/#${r.rule}`;
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border"
+                       style="background:${c.light};color:${c.text};border-color:${c.border}">
+                       ${escHtml(r.rule)} <span class="opacity-70">${r.count}</span>
+                    </a>`;
+        }).join(' ');
+
+        const expandRow = repo.rules.length > 0
+            ? `<tr id="${rowId}-detail" class="hidden bg-gray-50">
+                <td colspan="7" class="px-4 py-3 text-sm">
+                    <div class="flex flex-wrap gap-2">${badges}</div>
+                </td>
+               </tr>`
+            : '';
+
+        const chevron = repo.rules.length > 0
+            ? `<button onclick="toggleDetail('${rowId}')" class="text-gray-400 hover:text-gray-700 text-xs font-mono w-5 text-center">▶</button>`
+            : '';
+
+        return `<tr id="${rowId}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="py-2 pr-4">
+                <a href="https://github.com/${escHtml(repo.repository)}" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-600 hover:underline font-medium">${escHtml(repo.repository)}</a>
+            </td>
+            <td class="py-2 px-2 text-right font-mono text-gray-700">${total || '—'}</td>
+            <td class="py-2 px-2 text-right font-mono ${high   ? 'text-red-600 font-semibold'   : 'text-gray-300'}">${high   || '—'}</td>
+            <td class="py-2 px-2 text-right font-mono ${medium ? 'text-yellow-600 font-semibold': 'text-gray-300'}">${medium || '—'}</td>
+            <td class="py-2 px-2 text-right font-mono ${low    ? 'text-blue-600 font-semibold'  : 'text-gray-300'}">${low    || '—'}</td>
+            <td class="py-2 px-2 text-right font-mono ${info   ? 'text-gray-600'               : 'text-gray-300'}">${info   || '—'}</td>
+            <td class="py-2 pl-2">${chevron}</td>
+        </tr>${expandRow}`;
+    }).join('');
+
+    tbody.innerHTML = rows;
+
+    // Update sort icons
+    document.querySelectorAll('th[data-col]').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (th.dataset.col === sortCol) {
+            icon.textContent = sortDir === -1 ? '↓' : '↑';
+            th.classList.add('text-gray-700');
+        } else {
+            icon.textContent = '↕';
+            th.classList.remove('text-gray-700');
+        }
+    });
+
+    document.getElementById('table-footer').textContent =
+        `Showing ${data.length} of ${allData.length} repositories`;
+}
+
+function toggleDetail(rowId) {
+    const detail = document.getElementById(`${rowId}-detail`);
+    const btn = document.querySelector(`#${rowId} button`);
+    if (!detail) return;
+    const hidden = detail.classList.toggle('hidden');
+    if (btn) btn.textContent = hidden ? '▶' : '▼';
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Controls ─────────────────────────────────────────────────────────────────
+
+document.getElementById('search').addEventListener('input', e => {
+    filterSearch = e.target.value;
+    renderTable();
+});
+
+document.querySelectorAll('.sev-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterSev = btn.dataset.sev;
+        document.querySelectorAll('.sev-btn').forEach(b => {
+            b.classList.remove('active', 'bg-gray-800', 'text-white');
+        });
+        btn.classList.add('active', 'bg-gray-800', 'text-white');
+        renderTable();
+    });
+});
+
+document.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+            sortDir = -sortDir;
+        } else {
+            sortCol = col;
+            sortDir = col === 'repository' ? 1 : -1;
+        }
+        renderTable();
+    });
+});
+</script>
+
+</body>
+</html>
