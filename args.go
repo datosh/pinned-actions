@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func ParseArgs() Config {
+func ParseScanArgs(args []string) Config {
 	config := NewConfig()
-	fs := flag.NewFlagSet("GH Pinned Actions", flag.ExitOnError)
+	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 
 	fs.StringVar(&config.DownloadDir, "download-dir", "/tmp/pinned", "path to folder where repositories will be downloaded")
 	fs.StringVar(&config.ResultDir, "result-dir", "results", "path to folder where analysis results will be written")
@@ -17,8 +17,7 @@ func ParseArgs() Config {
 
 	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: pinned, zizmor, immutable)")
 
-	err := fs.Parse(os.Args[1:])
-	if err != nil {
+	if err := fs.Parse(args); err != nil {
 		fs.PrintDefaults()
 		os.Exit(1)
 	}

@@ -9,13 +9,36 @@ import (
 	"github.com/google/go-github/v85/github"
 )
 
+const usage = `Usage: pinned-actions <command> [flags]
+
+Commands:
+  scan           Download repositories and run analyzers
+  export-pinned  Export pinned.json to the format expected by the frontend
+  export-zizmor  Export zizmor.json to a slimmed per-rule-count format for the frontend
+
+Run 'pinned-actions <command> -h' for command-specific flags.
+`
+
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "export" {
-		runExport(os.Args[2:])
-		return
+	if len(os.Args) < 2 {
+		fmt.Fprint(os.Stderr, usage)
+		os.Exit(1)
 	}
 
-	config := ParseArgs()
+	switch os.Args[1] {
+	case "scan":
+		runScan(os.Args[2:])
+	case "export-pinned":
+		runExportPinned(os.Args[2:])
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", os.Args[1])
+		fmt.Fprint(os.Stderr, usage)
+		os.Exit(1)
+	}
+}
+
+func runScan(args []string) {
+	config := ParseScanArgs(args)
 	log.Printf("Configuration:\n%s", config)
 
 	token := os.Getenv("GITHUB_TOKEN")
