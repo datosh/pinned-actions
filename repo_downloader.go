@@ -89,10 +89,14 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 		return nil
 	}
 
-	// TODO: Prevent that username & password are queried. Disable TTY?
-	err := exec.Command("git", "clone", "--depth", "1", cloneURL, cloneInto).Run()
+	err := exec.Command("git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto).Run()
 	if err != nil {
 		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
+	}
+
+	err = exec.Command("git", "-C", cloneInto, "sparse-checkout", "set", ".github").Run()
+	if err != nil {
+		return fmt.Errorf("setting sparse checkout for %s: %w", cloneInto, err)
 	}
 
 	return nil
