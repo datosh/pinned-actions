@@ -29,7 +29,7 @@ go run . -max-pages 100
 > The default download directory is `/tmp/pinned`. You can change it with the `--download-dir` flag.
 
 > [!WARNING]
-> Downloading 10,000 repositories will take a long time (depending on your internet connection) and **consume about 1.5TB of disk space**.
+> Downloading 10,000 repositories will take a long time depending on your internet connection.
 
 ## Architecture
 
@@ -43,9 +43,21 @@ To get around this limitation, we modify the search query after each request, an
 
 ### git
 
-Repositories are cloned using the native `git` binary via `os/exec`. We use a
-partial clone with sparse checkout to fetch only the `.github/` directory,
-avoiding downloading the full repository contents.
+Repositories are cloned using the native `git` binary via `os/exec`, using a
+partial clone combined with sparse checkout:
+
+```sh
+git clone --depth 1 --filter=blob:none --sparse <url> <dir>
+git -C <dir> sparse-checkout set .github
+```
+
+`--filter=blob:none` instructs the server not to send any file blobs up front;
+`sparse-checkout set .github` then fetches only the blobs under `.github/`.
+Git's cone mode always includes root-level files (e.g. `README.md`, `go.mod`),
+but those are negligible in size. The large savings come from skipping source
+subdirectories (`src/`, `lib/`, `packages/`, etc.) that are irrelevant to the
+scan. In practice this reduces disk usage from ~1.5 TB to well under 1 GB for
+10,000 repositories.
 
 ### Parsing Actions
 
