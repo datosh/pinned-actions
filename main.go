@@ -14,7 +14,11 @@ func main() {
 	config := ParseArgs()
 	log.Printf("Configuration:\n%s", config)
 
-	client := github.NewClient(nil)
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		log.Printf("[WARN] GITHUB_TOKEN not set; unauthenticated search requests are heavily rate-limited and may return incomplete results")
+	}
+	client := github.NewClient(nil).WithAuthToken(token)
 
 	ctx := context.Background()
 
