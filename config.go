@@ -7,7 +7,6 @@ type Config struct {
 	MaxPages    int
 	Query       string
 	DownloadDir string
-	ResultFile  string
 	ResultDir   string
 }
 
@@ -17,7 +16,6 @@ func NewConfig() *Config {
 		MaxPages:    1,
 		Query:       "stars:>1000",
 		DownloadDir: "/tmp/pinned",
-		ResultFile:  "result.json",
 		ResultDir:   "results",
 	}
 }
@@ -28,6 +26,6 @@ func (c Config) String() string {
 	s += "MaxPages: " + fmt.Sprint(c.MaxPages) + "\n"
 	s += "Query: " + c.Query + "\n"
 	s += "DownloadDir: " + c.DownloadDir + "\n"
-	s += "ResultFile: " + c.ResultFile + "\n"
+	s += "ResultDir: " + c.ResultDir + "\n"
 	return s
 }
