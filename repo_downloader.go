@@ -54,6 +54,12 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			return fmt.Errorf("no search results")
 		}
 
+		if searchResult.GetIncompleteResults() {
+			log.Printf("[WARN] GitHub returned incomplete results for query %q — retrying\n", query)
+			i--
+			continue
+		}
+
 		log.Printf("Found %d repositories\n", len(searchResult.Repositories))
 
 		for _, repository := range searchResult.Repositories {
