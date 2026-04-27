@@ -42,10 +42,12 @@ func runExport(args []string) {
 	if err != nil {
 		log.Fatalf("creating %s: %v", *out, err)
 	}
-	defer f.Close()
-
 	if err := json.NewEncoder(f).Encode(results); err != nil {
+		_ = f.Close()
 		log.Fatalf("writing %s: %v", *out, err)
+	}
+	if err := f.Close(); err != nil {
+		log.Fatalf("closing %s: %v", *out, err)
 	}
 
 	fmt.Printf("Exported %d repositories to %s\n", len(results), *out)
