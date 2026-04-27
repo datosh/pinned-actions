@@ -9,6 +9,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIsHex(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{name: "valid lowercase hex", input: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", want: true},
+		{name: "uppercase hex rejected", input: "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2", want: false},
+		{name: "mixed case rejected", input: "a1B2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", want: false},
+		{name: "non-hex character", input: "g1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", want: false},
+		{name: "empty string", input: "", want: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, isHex(test.input))
+		})
+	}
+}
+
 func TestAnalyseRepository(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
