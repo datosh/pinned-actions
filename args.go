@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strings"
 )
 
 func ParseArgs() Config {
@@ -14,11 +15,15 @@ func ParseArgs() Config {
 	fs.IntVar(&config.MaxPages, "max-pages", 1, "maximum number of pages to download")
 	fs.IntVar(&config.PerPage, "per-page", 100, "number of repositories to download per page")
 
+	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: pinned, zizmor, immutable)")
+
 	err := fs.Parse(os.Args[1:])
 	if err != nil {
 		fs.PrintDefaults()
 		os.Exit(1)
 	}
+
+	config.Analyzers = strings.Split(*analyzerFlag, ",")
 
 	return *config
 }

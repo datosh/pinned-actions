@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -24,8 +25,9 @@ func main() {
 		log.Fatalf("creating result directory: %v", err)
 	}
 
-	analyzers := []Analyzer{
-		NewPinnedAnalyzer(config.ResultDir),
+	analyzers, err := buildAnalyzers(config, client)
+	if err != nil {
+		log.Fatalf("configuring analyzers: %v", err)
 	}
 
 	downloaded := make(chan string)
@@ -52,4 +54,17 @@ func main() {
 			log.Fatalf("closing analyzer %s: %v", a.Name(), err)
 		}
 	}
+}
+
+func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {
+	var analyzers []Analyzer
+	for _, name := range config.Analyzers {
+		switch name {
+		case "pinned":
+			analyzers = append(analyzers, NewPinnedAnalyzer(config.ResultDir))
+		default:
+			return nil, fmt.Errorf("unknown analyzer %q (available: pinned)", name)
+		}
+	}
+	return analyzers, nil
 }
