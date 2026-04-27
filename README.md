@@ -41,9 +41,11 @@ We use the public GitHub [repository search API](https://docs.github.com/en/rest
 
 To get around this limitation, we modify the search query after each request, and only use the first page returned.
 
-### go-git
+### git
 
-Although `go-git` was the initial choice to clone the repositories, it was later replaced by `os/exec` and `git` due to performance limitations of the library. See [linux-fetcher](./linux-fetcher/README.md).
+Repositories are cloned using the native `git` binary via `os/exec`. We use a
+partial clone with sparse checkout to fetch only the `.github/` directory,
+avoiding downloading the full repository contents.
 
 ### Parsing Actions
 
