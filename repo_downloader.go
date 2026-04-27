@@ -51,7 +51,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 
 		if searchResult == nil {
-			return fmt.Errorf("No search results")
+			return fmt.Errorf("no search results")
 		}
 
 		for _, repository := range searchResult.Repositories {
