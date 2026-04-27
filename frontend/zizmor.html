@@ -292,11 +292,14 @@ function sortedData(data) {
     });
 }
 
+const PAGE_SIZE = 100;
+
 function renderTable() {
-    const data = sortedData(filteredData());
+    const filtered = sortedData(filteredData());
+    const data = filtered.slice(0, PAGE_SIZE);
     const tbody = document.getElementById('repo-table-body');
 
-    if (data.length === 0) {
+    if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">No repositories match the current filter.</td></tr>';
         document.getElementById('table-footer').textContent = '';
         return;
@@ -370,8 +373,10 @@ function renderTable() {
         }
     });
 
-    document.getElementById('table-footer').textContent =
-        `Showing ${data.length} of ${allData.length} repositories`;
+    const footerText = filtered.length > PAGE_SIZE
+        ? `Showing top ${PAGE_SIZE} of ${filtered.length} matching repositories (${allData.length} total) — refine filters to narrow results`
+        : `Showing ${filtered.length} of ${allData.length} repositories`;
+    document.getElementById('table-footer').textContent = footerText;
 }
 
 function toggleDetail(rowId) {
