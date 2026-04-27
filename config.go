@@ -8,6 +8,7 @@ type Config struct {
 	Query       string
 	DownloadDir string
 	ResultDir   string
+	Analyzers   []string
 }
 
 func NewConfig() *Config {
@@ -17,6 +18,7 @@ func NewConfig() *Config {
 		Query:       "stars:>1000",
 		DownloadDir: "/tmp/pinned",
 		ResultDir:   "results",
+		Analyzers:   []string{"pinned"},
 	}
 }
 
@@ -27,5 +29,6 @@ func (c Config) String() string {
 	s += "Query: " + c.Query + "\n"
 	s += "DownloadDir: " + c.DownloadDir + "\n"
 	s += "ResultDir: " + c.ResultDir + "\n"
+	s += "Analyzers: " + fmt.Sprint(c.Analyzers) + "\n"
 	return s
 }
