@@ -62,8 +62,14 @@ func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {
 		switch name {
 		case "pinned":
 			analyzers = append(analyzers, NewPinnedAnalyzer(config.ResultDir))
+		case "zizmor":
+			a, err := NewZizmorAnalyzer(config.ResultDir)
+			if err != nil {
+				return nil, err
+			}
+			analyzers = append(analyzers, a)
 		default:
-			return nil, fmt.Errorf("unknown analyzer %q (available: pinned)", name)
+			return nil, fmt.Errorf("unknown analyzer %q (available: pinned, zizmor)", name)
 		}
 	}
 	return analyzers, nil
