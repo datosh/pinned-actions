@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -19,43 +22,47 @@ type Analysis struct {
 	HasDependabot bool   `json:"has_dependabot"`
 }
 
-func NewAnalysis(repository string) Analysis {
-	return Analysis{
-		Repository:    repository,
-		ActionsPinned: 0,
-		ActionsTotal:  0,
-		HasRenovate:   false,
-		HasDependabot: false,
+// PinnedAnalyzer checks what fraction of GitHub Actions in each repository
+// are pinned to a full-length commit SHA or OCI digest.
+type PinnedAnalyzer struct {
+	resultDir string
+	results   []Analysis
+}
+
+func NewPinnedAnalyzer(resultDir string) *PinnedAnalyzer {
+	return &PinnedAnalyzer{resultDir: resultDir}
+}
+
+func (p *PinnedAnalyzer) Name() string { return "pinned" }
+
+func (p *PinnedAnalyzer) Analyze(_ context.Context, repoPath, repo string) error {
+	analysis, err := analyseRepository(repoPath, repo)
+	if err != nil {
+		return err
 	}
+	p.results = append(p.results, analysis)
+	return nil
 }
 
-func (a *Analysis) CountPinned() {
-	a.ActionsPinned++
-	a.ActionsTotal++
-}
-
-func (a *Analysis) CountUnpinned() {
-	a.ActionsTotal++
-}
-
-func (a Analysis) String() string {
-	updater := "None"
-	if a.HasRenovate {
-		updater = "Renovate"
+func (p *PinnedAnalyzer) Close() error {
+	out := filepath.Join(p.resultDir, "pinned.json")
+	f, err := os.Create(out)
+	if err != nil {
+		return fmt.Errorf("creating %s: %w", out, err)
 	}
-	if a.HasDependabot {
-		updater = "Dependabot"
+	defer f.Close()
+	if err := json.NewEncoder(f).Encode(p.results); err != nil {
+		return fmt.Errorf("encoding %s: %w", out, err)
 	}
-	return fmt.Sprintf("%s: %d/%d (%s)", a.Repository, a.ActionsPinned, a.ActionsTotal, updater)
+	return nil
 }
 
-func AnalyseRepository(dir string, repo string) (Analysis, error) {
-	analysis := NewAnalysis(repo)
+func analyseRepository(dir string, repo string) (Analysis, error) {
+	analysis := Analysis{Repository: repo}
 
 	repoPath := filepath.Join(dir, repo)
 	workflowsPath := filepath.Join(repoPath, ".github", "workflows")
 
-	// Create a new Frizbee instance
 	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
 
 	actions, err := r.ListPath(workflowsPath)
@@ -67,15 +74,17 @@ func AnalyseRepository(dir string, repo string) (Analysis, error) {
 		switch action.Type {
 		case "container":
 			if len(action.Ref) == 71 && strings.HasPrefix(action.Ref, "sha256:") {
-				analysis.CountPinned()
+				analysis.ActionsPinned++
+				analysis.ActionsTotal++
 			} else {
-				analysis.CountUnpinned()
+				analysis.ActionsTotal++
 			}
 		case "action":
 			if len(action.Ref) == 40 && isHex(action.Ref) {
-				analysis.CountPinned()
+				analysis.ActionsPinned++
+				analysis.ActionsTotal++
 			} else {
-				analysis.CountUnpinned()
+				analysis.ActionsTotal++
 			}
 		default:
 			log.Printf("[WARN] unknown action type: %s", action.Type)
@@ -94,11 +103,9 @@ func AnalyseRepository(dir string, repo string) (Analysis, error) {
 		filepath.Join(repoPath, ".renovaterc.json"),
 		filepath.Join(repoPath, ".renovaterc.json5"),
 	}
-
-	renovate := slices.ContainsFunc(renovatePaths, func(path string) bool {
+	analysis.HasRenovate = slices.ContainsFunc(renovatePaths, func(path string) bool {
 		return exists(path)
 	})
-	analysis.HasRenovate = renovate
 
 	dependabotPath := filepath.Join(repoPath, ".github", "dependabot.yml")
 	if exists(dependabotPath) {

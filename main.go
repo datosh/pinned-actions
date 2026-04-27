@@ -38,7 +38,7 @@ func main() {
 			select {
 
 			case repo := <-downloaded:
-				analysis, err := AnalyseRepository(config.DownloadDir, repo)
+				analysis, err := analyseRepository(config.DownloadDir, repo)
 				if err != nil {
 					log.Printf("[ERROR] analysing repository: %v", err)
 					continue
