@@ -20,6 +20,10 @@ func main() {
 
 	ctx := context.Background()
 
+	if err := os.MkdirAll(config.ResultDir, 0o755); err != nil {
+		log.Fatalf("creating result directory: %v", err)
+	}
+
 	analyzers := []Analyzer{
 		NewPinnedAnalyzer(config.ResultDir),
 	}
