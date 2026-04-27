@@ -131,6 +131,7 @@ const SEVERITY_COLORS = {
 };
 
 const SEVERITY_ORDER = ['High', 'Medium', 'Low', 'Informational'];
+const PAGE_SIZE = 100;
 
 let allData = [];
 let sortCol = 'High';
@@ -291,8 +292,6 @@ function sortedData(data) {
         return sortDir * (av - bv);
     });
 }
-
-const PAGE_SIZE = 100;
 
 function renderTable() {
     const filtered = sortedData(filteredData());
