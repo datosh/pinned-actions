@@ -8,6 +8,7 @@ type Config struct {
 	Query       string
 	DownloadDir string
 	ResultFile  string
+	ResultDir   string
 }
 
 func NewConfig() *Config {
@@ -17,6 +18,7 @@ func NewConfig() *Config {
 		Query:       "stars:>1000",
 		DownloadDir: "/tmp/pinned",
 		ResultFile:  "result.json",
+		ResultDir:   "results",
 	}
 }
 

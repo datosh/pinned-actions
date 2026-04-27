@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/google/go-github/v85/github"
 )
@@ -22,55 +20,32 @@ func main() {
 
 	ctx := context.Background()
 
-	done := make(chan bool)
+	analyzers := []Analyzer{
+		NewPinnedAnalyzer(config.ResultDir),
+	}
+
 	downloaded := make(chan string)
 	downloader := NewRepositoryDownloader(client, config)
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
 	go func() {
-		defer wg.Done()
-
-		var analyzed []Analysis
-
-		for {
-			select {
-
-			case repo := <-downloaded:
-				analysis, err := analyseRepository(config.DownloadDir, repo)
-				if err != nil {
-					log.Printf("[ERROR] analysing repository: %v", err)
-					continue
-				}
-				analyzed = append(analyzed, analysis)
-
-			case <-done:
-				resultFile, err := os.Create(config.ResultFile)
-				if err != nil {
-					log.Fatalf("creating output file: %v", err)
-				}
-
-				err = json.NewEncoder(resultFile).Encode(analyzed)
-				if err != nil {
-					log.Fatalf("encoding output file: %v", err)
-				}
-
-				return
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
 		err := downloader.Download(ctx, downloaded)
 		if err != nil {
 			log.Fatalf("downloading: %v", err)
 		}
-
-		done <- true
+		close(downloaded)
 	}()
 
-	wg.Wait()
+	for repo := range downloaded {
+		for _, a := range analyzers {
+			if err := a.Analyze(ctx, config.DownloadDir, repo); err != nil {
+				log.Printf("[ERROR] %s: analysing %s: %v", a.Name(), repo, err)
+			}
+		}
+	}
+
+	for _, a := range analyzers {
+		if err := a.Close(); err != nil {
+			log.Fatalf("closing analyzer %s: %v", a.Name(), err)
+		}
+	}
 }
