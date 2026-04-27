@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -62,6 +63,14 @@ func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
+		// Exit code 3 means zizmor found no auditable inputs (e.g. .github/
+		// exists but contains only issue templates, not workflows or actions).
+		// Treat this the same as an empty findings list.
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
+			z.results = append(z.results, ZizmorResult{Repository: repo, Findings: []ZizmorFinding{}})
+			return nil
+		}
 		return fmt.Errorf("running zizmor: %w", err)
 	}
 
