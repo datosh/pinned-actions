@@ -10,6 +10,11 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "export" {
+		runExport(os.Args[2:])
+		return
+	}
+
 	config := ParseArgs()
 	log.Printf("Configuration:\n%s", config)
 
