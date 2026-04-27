@@ -28,12 +28,12 @@
             <div class="text-sm text-gray-500 mt-1">Repos Scanned</div>
         </div>
         <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-affected" class="text-3xl font-bold text-gray-800">—</div>
-            <div class="text-sm text-gray-500 mt-1">Repos with Findings</div>
+            <div id="stat-gha" class="text-3xl font-bold text-gray-800">—</div>
+            <div class="text-sm text-gray-500 mt-1">Using GHA</div>
         </div>
         <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-total" class="text-3xl font-bold text-gray-800">—</div>
-            <div class="text-sm text-gray-500 mt-1">Total Findings</div>
+            <div id="stat-affected" class="text-3xl font-bold text-gray-800">—</div>
+            <div class="text-sm text-gray-500 mt-1">High Severity Repos</div>
         </div>
         <div class="bg-white shadow-sm rounded-lg p-6 text-center">
             <div id="stat-high" class="text-3xl font-bold text-red-600">—</div>
@@ -118,10 +118,12 @@ const SEVERITY_COLORS = {
 const SEVERITY_ORDER = ['High', 'Medium', 'Low', 'Informational'];
 
 let allData = [];
-let sortCol = 'total';
+let sortCol = 'High';
 let sortDir = -1; // -1 = desc
 let filterSev = 'all';
 let filterSearch = '';
+let rulesChartInstance = null;
+let activeSeverityFilter = null;
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 
@@ -134,47 +136,53 @@ renderTable();
 
 function renderStats(data) {
     const totalRepos = data.length;
-    const affected = data.filter(r => r.rules.length > 0).length;
-    const total = data.reduce((s, r) => s + r.rules.reduce((ss, x) => ss + x.count, 0), 0);
-    const high = data.reduce((s, r) => s + r.rules.filter(x => x.severity === 'High').reduce((ss, x) => ss + x.count, 0), 0);
+    const ghaRepos = data.filter(r => r.uses_gha);
+    const affected = ghaRepos.filter(r => r.rules.some(x => x.severity === 'High')).length;
+    const high = ghaRepos.reduce((s, r) => s + r.rules.filter(x => x.severity === 'High').reduce((ss, x) => ss + x.count, 0), 0);
 
     document.getElementById('stat-repos').textContent = totalRepos.toLocaleString();
-    document.getElementById('stat-affected').textContent = `${affected} (${Math.round(affected/totalRepos*100)}%)`;
-    document.getElementById('stat-total').textContent = total.toLocaleString();
+    document.getElementById('stat-gha').textContent = `${ghaRepos.length} (${Math.round(ghaRepos.length/totalRepos*100)}%)`;
+    document.getElementById('stat-affected').textContent = `${affected} (${Math.round(affected/ghaRepos.length*100)}%)`;
     document.getElementById('stat-high').textContent = high.toLocaleString();
 }
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
 
-function renderCharts(data) {
-    // Aggregate rule counts globally
-    const ruleMap = {}; // rule -> {severity, count}
-    const sevMap = {};  // severity -> count
-
-    for (const repo of data) {
+function buildTopRules(data, severityFilter) {
+    const ruleMap = {};
+    for (const repo of data.filter(r => r.uses_gha)) {
         for (const r of repo.rules) {
-            const key = r.rule;
-            if (!ruleMap[key]) ruleMap[key] = { severity: r.severity, count: 0 };
-            ruleMap[key].count += r.count;
+            if (severityFilter && r.severity !== severityFilter) continue;
+            if (!ruleMap[r.rule]) ruleMap[r.rule] = { severity: r.severity, count: 0 };
+            ruleMap[r.rule].count += r.count;
+        }
+    }
+    return Object.entries(ruleMap)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10);
+}
 
+function updateRulesChart(data, severityFilter) {
+    const topRules = buildTopRules(data, severityFilter);
+    rulesChartInstance.data.labels = topRules.map(([rule]) => rule);
+    rulesChartInstance.data.datasets[0].data = topRules.map(([, v]) => v.count);
+    rulesChartInstance.data.datasets[0].backgroundColor = topRules.map(([, v]) => SEVERITY_COLORS[v.severity]?.bg || '#6B7280');
+    rulesChartInstance.update();
+}
+
+function renderCharts(data) {
+    const sevMap = {};
+    for (const repo of data.filter(r => r.uses_gha)) {
+        for (const r of repo.rules) {
             sevMap[r.severity] = (sevMap[r.severity] || 0) + r.count;
         }
     }
 
-    // Top 10 rules sorted by count
-    const topRules = Object.entries(ruleMap)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 10);
-
-    new Chart(document.getElementById('rulesChart'), {
+    rulesChartInstance = new Chart(document.getElementById('rulesChart'), {
         type: 'bar',
         data: {
-            labels: topRules.map(([rule]) => rule),
-            datasets: [{
-                label: 'Occurrences',
-                data: topRules.map(([, v]) => v.count),
-                backgroundColor: topRules.map(([, v]) => SEVERITY_COLORS[v.severity]?.bg || '#6B7280'),
-            }]
+            labels: [],
+            datasets: [{ label: 'Occurrences', data: [], backgroundColor: [] }]
         },
         options: {
             indexAxis: 'y',
@@ -186,22 +194,46 @@ function renderCharts(data) {
             }
         }
     });
+    updateRulesChart(data, null);
 
     const sevLabels = SEVERITY_ORDER.filter(s => sevMap[s]);
+    const fullColors = sevLabels.map(s => SEVERITY_COLORS[s]?.bg || '#6B7280');
+
     new Chart(document.getElementById('severityChart'), {
         type: 'doughnut',
         data: {
             labels: sevLabels,
             datasets: [{
                 data: sevLabels.map(s => sevMap[s] || 0),
-                backgroundColor: sevLabels.map(s => SEVERITY_COLORS[s]?.bg || '#6B7280'),
+                backgroundColor: [...fullColors],
                 borderWidth: 1,
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } }
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 12 }, padding: 12 },
+                    onClick(e, legendItem, legend) {
+                        const sev = sevLabels[legendItem.index];
+                        const chart = legend.chart;
+
+                        if (activeSeverityFilter === sev) {
+                            // Deselect: restore all colors and show all rules
+                            activeSeverityFilter = null;
+                            chart.data.datasets[0].backgroundColor = [...fullColors];
+                        } else {
+                            // Select: dim non-selected segments
+                            activeSeverityFilter = sev;
+                            chart.data.datasets[0].backgroundColor = fullColors.map(
+                                (c, i) => sevLabels[i] === sev ? c : c + '40'
+                            );
+                        }
+                        chart.update();
+                        updateRulesChart(data, activeSeverityFilter);
+                    }
+                }
             }
         }
     });
@@ -221,6 +253,8 @@ function filteredData() {
     return allData.filter(repo => {
         if (filterSearch && !repo.repository.toLowerCase().includes(filterSearch.toLowerCase())) return false;
         if (filterSev !== 'all') {
+            // Non-GHA repos have no findings and never match a severity filter.
+            if (!repo.uses_gha) return false;
             const has = repo.rules.some(r => r.severity === filterSev && r.count > 0);
             if (!has) return false;
         }
@@ -237,7 +271,7 @@ function sortedData(data) {
         }
         av = sortCol === 'total' ? totalCount(a) : sevCount(a, sortCol);
         bv = sortCol === 'total' ? totalCount(b) : sevCount(b, sortCol);
-        return sortDir * (bv - av);
+        return sortDir * (av - bv);
     });
 }
 
@@ -276,6 +310,16 @@ function renderTable() {
                 </td>
                </tr>`
             : '';
+
+        if (!repo.uses_gha) {
+            return `<tr id="${rowId}" class="border-b border-gray-100 bg-gray-50 text-gray-400">
+                <td class="py-2 pr-4">
+                    <a href="https://github.com/${escHtml(repo.repository)}" target="_blank" rel="noopener noreferrer"
+                       class="hover:underline">${escHtml(repo.repository)}</a>
+                </td>
+                <td colspan="6" class="py-2 px-2 text-xs italic">Not using GitHub Actions</td>
+            </tr>`;
+        }
 
         const chevron = repo.rules.length > 0
             ? `<button onclick="toggleDetail('${rowId}')" class="text-gray-400 hover:text-gray-700 text-xs font-mono w-5 text-center">▶</button>`

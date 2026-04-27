@@ -25,6 +25,7 @@ type ZizmorFinding struct {
 // ZizmorResult collects all findings for one repository.
 type ZizmorResult struct {
 	Repository string          `json:"repository"`
+	UsesGHA    bool            `json:"uses_gha"`
 	Findings   []ZizmorFinding `json:"findings"`
 }
 
@@ -49,7 +50,7 @@ func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
 func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error {
 	githubDir := filepath.Join(repoPath, repo, ".github")
 	if !exists(githubDir) {
-		z.results = append(z.results, ZizmorResult{Repository: repo, Findings: []ZizmorFinding{}})
+		z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
 		return nil
 	}
 
@@ -65,10 +66,10 @@ func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error
 	if err := cmd.Run(); err != nil {
 		// Exit code 3 means zizmor found no auditable inputs (e.g. .github/
 		// exists but contains only issue templates, not workflows or actions).
-		// Treat this the same as an empty findings list.
+		// The repo does not use GHA in a meaningful way.
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
-			z.results = append(z.results, ZizmorResult{Repository: repo, Findings: []ZizmorFinding{}})
+			z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
 			return nil
 		}
 		return fmt.Errorf("running zizmor: %w", err)
@@ -81,6 +82,7 @@ func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error
 
 	z.results = append(z.results, ZizmorResult{
 		Repository: repo,
+		UsesGHA:    true,
 		Findings:   findings,
 	})
 	return nil
