@@ -37,7 +37,6 @@ func main() {
 				analysis, err := AnalyseRepository(config.DownloadDir, repo)
 				if err != nil {
 					log.Printf("[ERROR] analysing repository: %v", err)
-					// TODO: https://github.com/stacklok/frizbee/issues/77
 					continue
 				}
 				analyzed = append(analyzed, analysis)
