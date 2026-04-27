@@ -8,6 +8,8 @@
   "commitMessagePrefix": "fix(deps): ",
   "addLabels": ["dependencies"],
 
+  "ignorePaths": ["testdata/**"],
+
   "postUpdateOptions": [
     "gomodTidy",
     "gomodUpdateImportPaths"
