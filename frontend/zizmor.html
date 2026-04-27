@@ -56,12 +56,27 @@
     <!-- Table Controls -->
     <div class="w-full max-w-4xl bg-white shadow-sm rounded-lg p-6 mb-2">
         <div class="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between mb-4">
-            <input
-                id="search"
-                type="text"
-                placeholder="Search repositories..."
-                class="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+            <div class="flex gap-2 items-center flex-wrap">
+                <input
+                    id="search"
+                    type="text"
+                    placeholder="Search repositories..."
+                    class="w-56 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <!-- Rule filter dropdown -->
+                <div class="relative">
+                    <button id="rule-filter-btn"
+                        class="flex items-center gap-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 whitespace-nowrap">
+                        <span id="rule-filter-label">Filter by rule</span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="rule-filter-panel"
+                        class="hidden absolute left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 max-h-64 overflow-y-auto">
+                    </div>
+                </div>
+            </div>
             <div class="flex gap-2 flex-wrap">
                 <button data-sev="all"   class="sev-btn active px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">All</button>
                 <button data-sev="High"  class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">High</button>
@@ -122,6 +137,7 @@ let sortCol = 'High';
 let sortDir = -1; // -1 = desc
 let filterSev = 'all';
 let filterSearch = '';
+let filterRules = new Set(); // empty = no rule filter
 let rulesChartInstance = null;
 let activeSeverityFilter = null;
 
@@ -130,6 +146,7 @@ let activeSeverityFilter = null;
 allData = ZIZMOR_DATA;
 renderStats(allData);
 renderCharts(allData);
+buildRuleFilter(allData);
 renderTable();
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -252,11 +269,11 @@ function totalCount(repo) {
 function filteredData() {
     return allData.filter(repo => {
         if (filterSearch && !repo.repository.toLowerCase().includes(filterSearch.toLowerCase())) return false;
-        if (filterSev !== 'all') {
-            // Non-GHA repos have no findings and never match a severity filter.
+        if (filterSev !== 'all' || filterRules.size > 0) {
+            // Non-GHA repos have no findings and never match severity or rule filters.
             if (!repo.uses_gha) return false;
-            const has = repo.rules.some(r => r.severity === filterSev && r.count > 0);
-            if (!has) return false;
+            if (filterSev !== 'all' && !repo.rules.some(r => r.severity === filterSev)) return false;
+            if (filterRules.size > 0 && !repo.rules.some(r => filterRules.has(r.rule))) return false;
         }
         return true;
     });
@@ -370,6 +387,54 @@ function escHtml(s) {
 }
 
 // ─── Controls ─────────────────────────────────────────────────────────────────
+
+function buildRuleFilter(data) {
+    // Collect all rules sorted alphabetically, with their dominant severity.
+    const ruleInfo = {};
+    for (const repo of data.filter(r => r.uses_gha)) {
+        for (const r of repo.rules) {
+            if (!ruleInfo[r.rule]) ruleInfo[r.rule] = r.severity;
+        }
+    }
+    const rules = Object.entries(ruleInfo).sort((a, b) => a[0].localeCompare(b[0]));
+
+    const panel = document.getElementById('rule-filter-panel');
+    panel.innerHTML = rules.map(([rule, sev]) => {
+        const c = SEVERITY_COLORS[sev] || SEVERITY_COLORS.Informational;
+        return `<label class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-sm">
+            <input type="checkbox" class="rule-checkbox rounded" value="${escHtml(rule)}">
+            <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" style="background:${c.bg}"></span>
+            ${escHtml(rule)}
+        </label>`;
+    }).join('');
+
+    panel.querySelectorAll('.rule-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (cb.checked) filterRules.add(cb.value);
+            else filterRules.delete(cb.value);
+            updateRuleFilterLabel();
+            renderTable();
+        });
+    });
+}
+
+function updateRuleFilterLabel() {
+    const label = document.getElementById('rule-filter-label');
+    label.textContent = filterRules.size === 0
+        ? 'Filter by rule'
+        : `${filterRules.size} rule${filterRules.size > 1 ? 's' : ''} selected`;
+    label.className = filterRules.size > 0 ? 'font-semibold text-blue-600' : '';
+}
+
+// Toggle dropdown open/close.
+document.getElementById('rule-filter-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('rule-filter-panel').classList.toggle('hidden');
+});
+document.addEventListener('click', () => {
+    document.getElementById('rule-filter-panel').classList.add('hidden');
+});
+document.getElementById('rule-filter-panel').addEventListener('click', e => e.stopPropagation());
 
 document.getElementById('search').addEventListener('input', e => {
     filterSearch = e.target.value;
