@@ -14,6 +14,23 @@
     "gomodTidy",
     "gomodUpdateImportPaths"
   ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^frontend/index\\.html$"],
+      "matchStrings": [
+        "cdn\\.jsdelivr\\.net/npm/(?<depName>@?[^@/]+(?:/[^@/]+)?)@(?<currentValue>[^/\"'\\s]+)"
+      ],
+      "datasourceTemplate": "npm"
+    },
+    {
+      "fileMatch": ["^frontend/index\\.html$"],
+      "matchStrings": [
+        "cdnjs\\.cloudflare\\.com/ajax/libs/(?<depName>[^/]+)/(?<currentValue>[^/]+)/"
+      ],
+      "datasourceTemplate": "cdnjs"
+    }
+  ],
+
   "packageRules": [
     {
       "groupName": "Go",
