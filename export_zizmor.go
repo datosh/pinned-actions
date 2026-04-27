@@ -21,6 +21,7 @@ type ZizmorWebRule struct {
 // ZizmorWebResult is one repository entry in the export-zizmor output.
 type ZizmorWebResult struct {
 	Repository string          `json:"repository"`
+	UsesGHA    bool            `json:"uses_gha"`
 	Rules      []ZizmorWebRule `json:"rules"`
 }
 
@@ -56,6 +57,7 @@ func runExportZizmor(args []string) {
 	for _, r := range raw {
 		web = append(web, ZizmorWebResult{
 			Repository: r.Repository,
+			UsesGHA:    r.UsesGHA,
 			Rules:      aggregateRules(r.Findings),
 		})
 	}
