@@ -45,7 +45,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 	for i := 0; i < r.config.MaxPages; i++ {
 		query := buildQuery(minStars, maxStars)
 		log.Printf("Searching repos with: %s\n", query)
-		searchResult, resp, err := r.client.Search.Repositories(ctx, query, opts)
+		searchResult, _, err := r.client.Search.Repositories(ctx, query, opts)
 		if err != nil {
 			return fmt.Errorf("searching repositories: %w", err)
 		}
@@ -53,6 +53,8 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		if searchResult == nil {
 			return fmt.Errorf("no search results")
 		}
+
+		log.Printf("Found %d repositories\n", len(searchResult.Repositories))
 
 		for _, repository := range searchResult.Repositories {
 			maxStars = repository.GetStargazersCount() - 1
@@ -63,7 +65,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			downloaded <- repository.GetFullName()
 		}
 
-		if resp.NextPage == 0 {
+		if len(searchResult.Repositories) < r.config.PerPage {
 			log.Printf("Handled all pages after %d requests.\n", i+1)
 			break
 		}
