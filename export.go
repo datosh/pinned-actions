@@ -9,15 +9,15 @@ import (
 	"path/filepath"
 )
 
-// runExport implements the "export" subcommand. It reads pinned.json from the
-// result directory and writes it to a specified output file in the format
-// expected by the frontend.
+// runExportPinned implements the "export-pinned" subcommand. It reads
+// pinned.json from the result directory and writes it to a specified output
+// file in the format expected by the frontend.
 //
 // Usage:
 //
-//	pinned-actions export --result-dir=results/ --out=web.json
-func runExport(args []string) {
-	fs := flag.NewFlagSet("export", flag.ExitOnError)
+//	pinned-actions export-pinned --result-dir=results/ --out=web.json
+func runExportPinned(args []string) {
+	fs := flag.NewFlagSet("export-pinned", flag.ExitOnError)
 	resultDir := fs.String("result-dir", "results", "directory containing analysis results")
 	out := fs.String("out", "web.json", "output file for the frontend")
 
