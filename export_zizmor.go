@@ -31,11 +31,11 @@ type ZizmorWebResult struct {
 //
 // Usage:
 //
-//	pinned-actions export-zizmor --result-dir=results/ --out=zizmor-web.json
+//	pinned-actions export-zizmor --result-dir=results/ --out=zizmor-web.js
 func runExportZizmor(args []string) {
 	fs := flag.NewFlagSet("export-zizmor", flag.ExitOnError)
 	resultDir := fs.String("result-dir", "results", "directory containing analysis results")
-	out := fs.String("out", "zizmor-web.json", "output file for the frontend")
+	out := fs.String("out", "zizmor-web.js", "output file for the frontend")
 
 	if err := fs.Parse(args); err != nil {
 		fs.PrintDefaults()
@@ -62,11 +62,16 @@ func runExportZizmor(args []string) {
 		})
 	}
 
+	jsonData, err := json.Marshal(web)
+	if err != nil {
+		log.Fatalf("marshalling data: %v", err)
+	}
+
 	f, err := os.Create(*out)
 	if err != nil {
 		log.Fatalf("creating %s: %v", *out, err)
 	}
-	if err := json.NewEncoder(f).Encode(web); err != nil {
+	if _, err := fmt.Fprintf(f, "const ZIZMOR_DATA = %s;\n", jsonData); err != nil {
 		_ = f.Close()
 		log.Fatalf("writing %s: %v", *out, err)
 	}
