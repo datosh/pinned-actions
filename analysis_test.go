@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +30,7 @@ func TestIsHex(t *testing.T) {
 	}
 }
 
-func TestAnalyseRepository(t *testing.T) {
+func TestPinnedAnalyzer(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
@@ -77,13 +78,16 @@ func TestAnalyseRepository(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			analysis, err := AnalyseRepository(testdata, test.repo)
+			a := NewPinnedAnalyzer(t.TempDir())
+			err := a.Analyze(context.Background(), testdata, test.repo)
 			assert.NoError(t, err)
 
-			assert.Equal(t, test.wantPinned, analysis.ActionsPinned)
-			assert.Equal(t, test.wantTotal, analysis.ActionsTotal)
-			assert.Equal(t, test.wantHasRenovate, analysis.HasRenovate)
-			assert.Equal(t, test.wantHasDependabot, analysis.HasDependabot)
+			require.Len(t, a.results, 1)
+			got := a.results[0]
+			assert.Equal(t, test.wantPinned, got.ActionsPinned)
+			assert.Equal(t, test.wantTotal, got.ActionsTotal)
+			assert.Equal(t, test.wantHasRenovate, got.HasRenovate)
+			assert.Equal(t, test.wantHasDependabot, got.HasDependabot)
 		})
 	}
 }
