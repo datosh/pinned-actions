@@ -30,6 +30,8 @@ func main() {
 		runScan(os.Args[2:])
 	case "export-pinned":
 		runExportPinned(os.Args[2:])
+	case "export-zizmor":
+		runExportZizmor(os.Args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", os.Args[1])
 		fmt.Fprint(os.Stderr, usage)
