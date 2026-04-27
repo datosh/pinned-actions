@@ -15,7 +15,7 @@ func ParseArgs() Config {
 	fs.IntVar(&config.MaxPages, "max-pages", 1, "maximum number of pages to download")
 	fs.IntVar(&config.PerPage, "per-page", 100, "number of repositories to download per page")
 
-	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: pinned, zizmor)")
+	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: pinned, zizmor, immutable)")
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {

@@ -68,8 +68,10 @@ func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {
 				return nil, err
 			}
 			analyzers = append(analyzers, a)
+		case "immutable":
+			analyzers = append(analyzers, NewImmutableReleasesAnalyzer(client, config.ResultDir))
 		default:
-			return nil, fmt.Errorf("unknown analyzer %q (available: pinned, zizmor)", name)
+			return nil, fmt.Errorf("unknown analyzer %q (available: pinned, zizmor, immutable)", name)
 		}
 	}
 	return analyzers, nil
