@@ -50,11 +50,11 @@ func (p *PinnedAnalyzer) Close() error {
 	if err != nil {
 		return fmt.Errorf("creating %s: %w", out, err)
 	}
-	defer f.Close()
 	if err := json.NewEncoder(f).Encode(p.results); err != nil {
+		_ = f.Close()
 		return fmt.Errorf("encoding %s: %w", out, err)
 	}
-	return nil
+	return f.Close()
 }
 
 func analyseRepository(dir string, repo string) (Analysis, error) {

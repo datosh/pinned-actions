@@ -52,7 +52,7 @@ func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string
 		}
 		return fmt.Errorf("fetching latest release for %s: %w", repo, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	im.results = append(im.results, ImmutableResult{
 		Repository:             repo,
@@ -67,9 +67,9 @@ func (im *ImmutableReleasesAnalyzer) Close() error {
 	if err != nil {
 		return fmt.Errorf("creating %s: %w", out, err)
 	}
-	defer f.Close()
 	if err := json.NewEncoder(f).Encode(im.results); err != nil {
+		_ = f.Close()
 		return fmt.Errorf("encoding %s: %w", out, err)
 	}
-	return nil
+	return f.Close()
 }
