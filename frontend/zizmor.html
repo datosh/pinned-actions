@@ -22,22 +22,36 @@
     </header>
 
     <!-- Summary Stats -->
-    <div id="stats" class="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-repos" class="text-3xl font-bold text-gray-800">—</div>
-            <div class="text-sm text-gray-500 mt-1">Repos Scanned</div>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-gha" class="text-3xl font-bold text-gray-800">—</div>
-            <div class="text-sm text-gray-500 mt-1">Using GHA</div>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-affected" class="text-3xl font-bold text-gray-800">—</div>
-            <div class="text-sm text-gray-500 mt-1">High Severity Repos</div>
-        </div>
-        <div class="bg-white shadow-sm rounded-lg p-6 text-center">
-            <div id="stat-high" class="text-3xl font-bold text-red-600">—</div>
-            <div class="text-sm text-gray-500 mt-1">High Severity</div>
+    <div class="w-full max-w-4xl bg-white shadow-sm rounded-lg px-8 py-6 mb-6">
+        <div class="flex items-center justify-between gap-2">
+
+            <!-- Step 1 -->
+            <div class="text-center flex-1">
+                <div id="stat-repos" class="text-3xl font-bold text-gray-800">—</div>
+                <div class="text-sm font-medium text-gray-600 mt-1">Repos Scanned</div>
+                <div class="text-xs text-gray-400 mt-0.5">total</div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="text-gray-300 text-2xl font-light flex-shrink-0">→</div>
+
+            <!-- Step 2 -->
+            <div class="text-center flex-1">
+                <div id="stat-gha" class="text-3xl font-bold text-gray-800">—</div>
+                <div class="text-sm font-medium text-gray-600 mt-1">Using GHA</div>
+                <div id="stat-gha-pct" class="text-xs text-gray-400 mt-0.5">—% of total</div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="text-gray-300 text-2xl font-light flex-shrink-0">→</div>
+
+            <!-- Step 3 -->
+            <div class="text-center flex-1">
+                <div id="stat-affected" class="text-3xl font-bold text-red-600">—</div>
+                <div class="text-sm font-medium text-gray-600 mt-1">High Severity Repos</div>
+                <div id="stat-affected-pct" class="text-xs text-gray-400 mt-0.5">—% of GHA repos</div>
+            </div>
+
         </div>
     </div>
 
@@ -157,12 +171,12 @@ function renderStats(data) {
     const totalRepos = data.length;
     const ghaRepos = data.filter(r => r.uses_gha);
     const affected = ghaRepos.filter(r => r.rules.some(x => x.severity === 'High')).length;
-    const high = ghaRepos.reduce((s, r) => s + r.rules.filter(x => x.severity === 'High').reduce((ss, x) => ss + x.count, 0), 0);
 
     document.getElementById('stat-repos').textContent = totalRepos.toLocaleString();
-    document.getElementById('stat-gha').textContent = `${ghaRepos.length} (${Math.round(ghaRepos.length/totalRepos*100)}%)`;
-    document.getElementById('stat-affected').textContent = `${affected} (${Math.round(affected/ghaRepos.length*100)}%)`;
-    document.getElementById('stat-high').textContent = high.toLocaleString();
+    document.getElementById('stat-gha').textContent = ghaRepos.length.toLocaleString();
+    document.getElementById('stat-gha-pct').textContent = `${Math.round(ghaRepos.length / totalRepos * 100)}% of total`;
+    document.getElementById('stat-affected').textContent = affected.toLocaleString();
+    document.getElementById('stat-affected-pct').textContent = `${Math.round(affected / ghaRepos.length * 100)}% of GHA repos`;
 }
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
