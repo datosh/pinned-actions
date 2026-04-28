@@ -22,6 +22,7 @@ type ZizmorWebRule struct {
 type ZizmorWebResult struct {
 	Repository string          `json:"repository"`
 	UsesGHA    bool            `json:"uses_gha"`
+	Stars      int             `json:"stars"`
 	Rules      []ZizmorWebRule `json:"rules"`
 }
 
@@ -42,6 +43,16 @@ func runExportZizmor(args []string) {
 		os.Exit(1)
 	}
 
+	starsIn := filepath.Join(*resultDir, "stars.json")
+	starsData, err := os.ReadFile(starsIn)
+	if err != nil {
+		log.Fatalf("reading %s: %v", starsIn, err)
+	}
+	var stars map[string]int
+	if err := json.Unmarshal(starsData, &stars); err != nil {
+		log.Fatalf("parsing %s: %v", starsIn, err)
+	}
+
 	in := filepath.Join(*resultDir, "zizmor.json")
 	data, err := os.ReadFile(in)
 	if err != nil {
@@ -58,6 +69,7 @@ func runExportZizmor(args []string) {
 		web = append(web, ZizmorWebResult{
 			Repository: r.Repository,
 			UsesGHA:    r.UsesGHA,
+			Stars:      stars[r.Repository],
 			Rules:      aggregateRules(r.Findings),
 		})
 	}
