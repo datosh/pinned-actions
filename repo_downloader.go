@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -43,6 +44,8 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 	maxStars := 500000
 	minStars := 1000
 
+	stars := make(map[string]int)
+
 	for i := 0; i < r.config.MaxPages; i++ {
 		query := buildQuery(minStars, maxStars)
 		log.Printf("Searching repos with: %s\n", query)
@@ -65,6 +68,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 
 		for _, repository := range searchResult.Repositories {
 			maxStars = repository.GetStargazersCount() - 1
+			stars[repository.GetFullName()] = repository.GetStargazersCount()
 			if err := r.downloadRepository(repository); err != nil {
 				log.Printf("[ERROR] downloading repository: %v", err)
 				continue
@@ -78,7 +82,24 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 	}
 
+	if err := r.writeStars(stars); err != nil {
+		return fmt.Errorf("writing stars: %w", err)
+	}
+
 	return nil
+}
+
+func (r *RepositoryDownloader) writeStars(stars map[string]int) error {
+	out := filepath.Join(r.config.ResultDir, "stars.json")
+	f, err := os.Create(out)
+	if err != nil {
+		return fmt.Errorf("creating %s: %w", out, err)
+	}
+	if err := json.NewEncoder(f).Encode(stars); err != nil {
+		_ = f.Close()
+		return fmt.Errorf("encoding %s: %w", out, err)
+	}
+	return f.Close()
 }
 
 func (r *RepositoryDownloader) downloadRepository(repository *github.Repository) error {

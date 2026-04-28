@@ -107,6 +107,7 @@
                 <thead>
                     <tr class="border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
                         <th class="pb-2 pr-4 font-semibold cursor-pointer select-none" data-col="repository">Repository <span class="sort-icon">↕</span></th>
+                        <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="stars">Stars <span class="sort-icon">↕</span></th>
                         <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="total">Total <span class="sort-icon">↕</span></th>
                         <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="High">High <span class="sort-icon">↕</span></th>
                         <th class="pb-2 px-2 font-semibold cursor-pointer select-none text-right" data-col="Medium">Medium <span class="sort-icon">↕</span></th>
@@ -116,7 +117,7 @@
                     </tr>
                 </thead>
                 <tbody id="repo-table-body">
-                    <tr><td colspan="7" class="py-8 text-center text-gray-400">Loading...</td></tr>
+                    <tr><td colspan="8" class="py-8 text-center text-gray-400">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -313,8 +314,8 @@ function sortedData(data) {
             av = a.repository; bv = b.repository;
             return sortDir * (av < bv ? -1 : av > bv ? 1 : 0);
         }
-        av = sortCol === 'total' ? totalCount(a) : sevCount(a, sortCol);
-        bv = sortCol === 'total' ? totalCount(b) : sevCount(b, sortCol);
+        av = sortCol === 'total' ? totalCount(a) : sortCol === 'stars' ? (a.stars || 0) : sevCount(a, sortCol);
+        bv = sortCol === 'total' ? totalCount(b) : sortCol === 'stars' ? (b.stars || 0) : sevCount(b, sortCol);
         return sortDir * (av - bv);
     });
 }
@@ -325,7 +326,7 @@ function renderTable() {
     const tbody = document.getElementById('repo-table-body');
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-400">No repositories match the current filter.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-gray-400">No repositories match the current filter.</td></tr>';
         document.getElementById('table-footer').textContent = '';
         return;
     }
@@ -350,7 +351,7 @@ function renderTable() {
 
         const expandRow = repo.rules.length > 0
             ? `<tr id="${rowId}-detail" class="hidden bg-gray-50">
-                <td colspan="7" class="px-4 py-3 text-sm">
+                <td colspan="8" class="px-4 py-3 text-sm">
                     <div class="flex flex-wrap gap-2">${badges}</div>
                 </td>
                </tr>`
@@ -362,7 +363,7 @@ function renderTable() {
                     <a href="https://github.com/${escHtml(repo.repository)}" target="_blank" rel="noopener noreferrer"
                        class="hover:underline">${escHtml(repo.repository)}</a>
                 </td>
-                <td colspan="6" class="py-2 px-2 text-xs italic">Not using GitHub Actions</td>
+                <td colspan="7" class="py-2 px-2 text-xs italic">Not using GitHub Actions</td>
             </tr>`;
         }
 
@@ -375,6 +376,7 @@ function renderTable() {
                 <a href="https://github.com/${escHtml(repo.repository)}" target="_blank" rel="noopener noreferrer"
                    class="text-blue-600 hover:underline font-medium">${escHtml(repo.repository)}</a>
             </td>
+            <td class="py-2 px-2 text-right font-mono text-gray-500">${fmtStars(repo.stars)}</td>
             <td class="py-2 px-2 text-right font-mono text-gray-700">${total || '—'}</td>
             <td class="py-2 px-2 text-right font-mono ${high   ? 'text-red-600 font-semibold'   : 'text-gray-300'}">${high   || '—'}</td>
             <td class="py-2 px-2 text-right font-mono ${medium ? 'text-yellow-600 font-semibold': 'text-gray-300'}">${medium || '—'}</td>
@@ -410,6 +412,12 @@ function toggleDetail(rowId) {
     if (!detail) return;
     const hidden = detail.classList.toggle('hidden');
     if (btn) btn.textContent = hidden ? '▶' : '▼';
+}
+
+function fmtStars(n) {
+    if (!n) return '—';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return n.toString();
 }
 
 function escHtml(s) {
