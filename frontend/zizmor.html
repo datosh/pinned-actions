@@ -167,24 +167,39 @@ function renderStats(data) {
 // ─── Charts ───────────────────────────────────────────────────────────────────
 
 function buildTopRules(data, severityFilter) {
-    const ruleMap = {};
+    // Key by rule+severity so the same rule at different severities gets
+    // separate entries rather than being lumped together.
+    const counts = {};
     for (const repo of data.filter(r => r.uses_gha)) {
         for (const r of repo.rules) {
             if (severityFilter && r.severity !== severityFilter) continue;
-            if (!ruleMap[r.rule]) ruleMap[r.rule] = { severity: r.severity, count: 0 };
-            ruleMap[r.rule].count += r.count;
+            const key = `${r.rule}\0${r.severity}`;
+            if (!counts[key]) counts[key] = { rule: r.rule, severity: r.severity, count: 0 };
+            counts[key].count += r.count;
         }
     }
-    return Object.entries(ruleMap)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 10);
+    // Track which rules appear with more than one severity so we can suffix
+    // the label to disambiguate (e.g. "template-injection (medium)").
+    const sevPerRule = {};
+    for (const v of Object.values(counts)) {
+        sevPerRule[v.rule] = (sevPerRule[v.rule] || 0) + 1;
+    }
+    return Object.values(counts)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10)
+        .map(v => ({
+            ...v,
+            label: sevPerRule[v.rule] > 1
+                ? `${v.rule} (${v.severity.toLowerCase()})`
+                : v.rule,
+        }));
 }
 
 function updateRulesChart(data, severityFilter) {
     const topRules = buildTopRules(data, severityFilter);
-    rulesChartInstance.data.labels = topRules.map(([rule]) => rule);
-    rulesChartInstance.data.datasets[0].data = topRules.map(([, v]) => v.count);
-    rulesChartInstance.data.datasets[0].backgroundColor = topRules.map(([, v]) => SEVERITY_COLORS[v.severity]?.bg || '#6B7280');
+    rulesChartInstance.data.labels = topRules.map(v => v.label);
+    rulesChartInstance.data.datasets[0].data = topRules.map(v => v.count);
+    rulesChartInstance.data.datasets[0].backgroundColor = topRules.map(v => SEVERITY_COLORS[v.severity]?.bg || '#6B7280');
     rulesChartInstance.update();
 }
 
