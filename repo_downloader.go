@@ -14,6 +14,7 @@ import (
 
 var blockedRepos = []string{
 	"cdnjs/cdnjs",
+	"go-xorm/xorm",
 }
 
 type RepositoryDownloader struct {
