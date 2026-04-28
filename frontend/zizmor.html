@@ -77,13 +77,14 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-2 flex-wrap">
-                <button data-sev="all"   class="sev-btn active px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">All</button>
-                <button data-sev="High"  class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">High</button>
-                <button data-sev="Medium" class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-300">Medium</button>
-                <button data-sev="Low"   class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">Low</button>
-                <button data-sev="Informational" class="sev-btn px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">Info</button>
-            </div>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
+                <div class="relative">
+                    <input type="checkbox" id="gha-toggle" class="sr-only" checked>
+                    <div class="block bg-gray-300 w-10 h-6 rounded-full transition-colors duration-200" id="gha-toggle-track"></div>
+                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200" id="gha-toggle-dot"></div>
+                </div>
+                GitHub Actions only
+            </label>
         </div>
 
         <!-- Table -->
@@ -136,7 +137,7 @@ const PAGE_SIZE = 100;
 let allData = [];
 let sortCol = 'High';
 let sortDir = -1; // -1 = desc
-let filterSev = 'all';
+let filterGHAOnly = true;
 let filterSearch = '';
 let filterRules = new Set(); // empty = no rule filter
 let rulesChartInstance = null;
@@ -285,12 +286,8 @@ function totalCount(repo) {
 function filteredData() {
     return allData.filter(repo => {
         if (filterSearch && !repo.repository.toLowerCase().includes(filterSearch.toLowerCase())) return false;
-        if (filterSev !== 'all' || filterRules.size > 0) {
-            // Non-GHA repos have no findings and never match severity or rule filters.
-            if (!repo.uses_gha) return false;
-            if (filterSev !== 'all' && !repo.rules.some(r => r.severity === filterSev)) return false;
-            if (filterRules.size > 0 && !repo.rules.some(r => filterRules.has(r.rule))) return false;
-        }
+        if (filterGHAOnly && !repo.uses_gha) return false;
+        if (filterRules.size > 0 && !repo.rules.some(r => filterRules.has(r.rule))) return false;
         return true;
     });
 }
@@ -460,15 +457,25 @@ document.getElementById('search').addEventListener('input', e => {
     renderTable();
 });
 
-document.querySelectorAll('.sev-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        filterSev = btn.dataset.sev;
-        document.querySelectorAll('.sev-btn').forEach(b => {
-            b.classList.remove('active', 'bg-gray-800', 'text-white');
-        });
-        btn.classList.add('active', 'bg-gray-800', 'text-white');
-        renderTable();
-    });
+const toggle = document.getElementById('gha-toggle');
+const toggleTrack = document.getElementById('gha-toggle-track');
+const toggleDot = document.getElementById('gha-toggle-dot');
+
+function applyToggleStyle() {
+    if (filterGHAOnly) {
+        toggleTrack.classList.replace('bg-gray-300', 'bg-blue-500');
+        toggleDot.style.transform = 'translateX(1rem)';
+    } else {
+        toggleTrack.classList.replace('bg-blue-500', 'bg-gray-300');
+        toggleDot.style.transform = 'translateX(0)';
+    }
+}
+applyToggleStyle();
+
+toggle.addEventListener('change', () => {
+    filterGHAOnly = toggle.checked;
+    applyToggleStyle();
+    renderTable();
 });
 
 document.querySelectorAll('th[data-col]').forEach(th => {
