@@ -36,6 +36,8 @@ func NewImmutableReleasesAnalyzer(client *github.Client, resultDir string) *Immu
 func (im *ImmutableReleasesAnalyzer) Name() string { return "immutable" }
 
 func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string) error {
+	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+
 	parts := strings.SplitN(repo, "/", 2)
 	if len(parts) != 2 {
 		return fmt.Errorf("unexpected repo format %q (want owner/name)", repo)
