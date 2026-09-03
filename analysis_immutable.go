@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v91/github"
 )
 
 // ImmutableResult records whether the latest release of a repository is
