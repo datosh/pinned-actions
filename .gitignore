@@ -26,8 +26,9 @@ go.work
 
 # End of https://www.toptal.com/developers/gitignore/api/go
 
-result.json
+results/
 
 pinned-actions
 
 .idea
+TASKS.md
