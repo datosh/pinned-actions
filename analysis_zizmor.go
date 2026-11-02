@@ -144,7 +144,7 @@ func parseZizmorOutput(data []byte, repoPath, repo string) ([]ZizmorFinding, err
 	}
 
 	absRepoPath := filepath.Join(repoPath, repo)
-	var findings []ZizmorFinding
+	findings := []ZizmorFinding{}
 	for _, r := range raw {
 		f := ZizmorFinding{
 			Rule:       r.Ident,

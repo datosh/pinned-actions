@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -57,6 +58,19 @@ func TestCheckZizmorVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseZizmorOutputNoFindings(t *testing.T) {
+	findings, err := parseZizmorOutput([]byte(`[]`), "/dl", "o/r")
+	require.NoError(t, err)
+
+	assert.NotNil(t, findings)
+	assert.Empty(t, findings)
+
+	// The result file must say [], not null.
+	encoded, err := json.Marshal(ZizmorResult{Repository: "o/r", UsesGHA: true, Findings: findings})
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"repository":"o/r","uses_gha":true,"findings":[]}`, string(encoded))
 }
 
 func TestParseZizmorOutputNoLocalLocation(t *testing.T) {
