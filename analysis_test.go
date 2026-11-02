@@ -103,12 +103,12 @@ func TestPinnedAnalyzer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			a := NewPinnedAnalyzer(t.TempDir())
-			err := a.Analyze(context.Background(), testdata, test.repo)
+			a := NewPinnedAnalyzer()
+			result, err := a.Analyze(context.Background(), testdata, test.repo)
 			assert.NoError(t, err)
 
-			require.Len(t, a.results, 1)
-			got := a.results[0]
+			got, ok := result.(Analysis)
+			require.True(t, ok)
 			assert.Equal(t, test.wantPinned, got.ActionsPinned)
 			assert.Equal(t, test.wantTotal, got.ActionsTotal)
 			assert.Equal(t, test.wantHasRenovate, got.HasRenovate)

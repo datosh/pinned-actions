@@ -39,6 +39,45 @@ func TestReadJSON(t *testing.T) {
 	assert.ErrorContains(t, readJSON(invalid, &got), "parsing")
 }
 
+func TestJSONLRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "out.jsonl")
+
+	w, err := newJSONLWriter(path)
+	require.NoError(t, err)
+	require.NoError(t, w.Write(map[string]int{"a": 1}))
+
+	// Each line is on disk before Close, so a crash keeps earlier results.
+	got, err := readJSONL[map[string]int](path)
+	require.NoError(t, err)
+	assert.Equal(t, []map[string]int{{"a": 1}}, got)
+
+	require.NoError(t, w.Write(map[string]int{"b": 2}))
+	require.NoError(t, w.Close())
+
+	got, err = readJSONL[map[string]int](path)
+	require.NoError(t, err)
+	assert.Equal(t, []map[string]int{{"a": 1}, {"b": 2}}, got)
+}
+
+func TestReadJSONLEmptyAndInvalid(t *testing.T) {
+	dir := t.TempDir()
+	empty := filepath.Join(dir, "empty.jsonl")
+	require.NoError(t, os.WriteFile(empty, nil, 0o644))
+	broken := filepath.Join(dir, "broken.jsonl")
+	require.NoError(t, os.WriteFile(broken, []byte("{\"a\":1}\n{\"a\":"), 0o644))
+
+	got, err := readJSONL[map[string]int](empty)
+	require.NoError(t, err)
+	assert.NotNil(t, got, "an empty file is an empty list, not nil")
+	assert.Empty(t, got)
+
+	_, err = readJSONL[map[string]int](broken)
+	assert.ErrorContains(t, err, "parsing")
+
+	_, err = readJSONL[map[string]int](filepath.Join(dir, "missing.jsonl"))
+	assert.ErrorContains(t, err, "reading")
+}
+
 func TestWriteJSONErrors(t *testing.T) {
 	dir := t.TempDir()
 

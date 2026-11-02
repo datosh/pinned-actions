@@ -32,7 +32,7 @@ func TestZizmorAnalyzer(t *testing.T) {
 			a, err := NewZizmorAnalyzer(t.TempDir())
 			require.NoError(t, err)
 
-			require.NoError(t, a.Analyze(context.Background(), "testdata", test.repo))
+			require.NoError(t, a.analyze(context.Background(), "testdata", test.repo))
 
 			require.Len(t, a.results, 1)
 			got := a.results[0]

@@ -90,7 +90,13 @@ func checkZizmorVersion(output string) error {
 
 func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
 
-func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) error {
+// Analyze collects results itself and writes them in Close (not yet ported to
+// per-repository results).
+func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) (any, error) {
+	return nil, z.analyze(ctx, repoPath, repo)
+}
+
+func (z *ZizmorAnalyzer) analyze(ctx context.Context, repoPath, repo string) error {
 	githubDir := filepath.Join(repoPath, repo, ".github")
 	hasGithubDir, err := exists(githubDir)
 	if err != nil {

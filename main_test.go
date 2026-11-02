@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,9 +19,9 @@ type fakeAnalyzer struct {
 
 func (f *fakeAnalyzer) Name() string { return "fake" }
 
-func (f *fakeAnalyzer) Analyze(_ context.Context, _, repo string) error {
+func (f *fakeAnalyzer) Analyze(_ context.Context, _, repo string) (any, error) {
 	f.analyzed = append(f.analyzed, repo)
-	return nil
+	return repo, nil
 }
 
 func (f *fakeAnalyzer) Close() error {
@@ -73,7 +74,8 @@ func TestRunPipeline(t *testing.T) {
 			}
 			a := &fakeAnalyzer{closeErr: test.closeErr}
 
-			err := runPipeline(context.Background(), download, "/unused", []Analyzer{a})
+			resultDir := t.TempDir()
+			err := runPipeline(context.Background(), download, "/unused", resultDir, []Analyzer{a})
 
 			if len(test.wantErrs) == 0 {
 				require.NoError(t, err)
@@ -83,6 +85,11 @@ func TestRunPipeline(t *testing.T) {
 			}
 			assert.Equal(t, test.wantAnalyzed, a.analyzed)
 			assert.Equal(t, 1, a.closed)
+
+			// Results were saved one line per repository, even on failure.
+			saved, readErr := readJSONL[string](filepath.Join(resultDir, "fake.jsonl"))
+			require.NoError(t, readErr)
+			assert.Equal(t, test.wantAnalyzed, saved)
 		})
 	}
 }
@@ -99,7 +106,7 @@ func TestRunPipelineCancelledStillFlushes(t *testing.T) {
 	}
 	a := &fakeAnalyzer{}
 
-	err := runPipeline(ctx, download, "/unused", []Analyzer{a})
+	err := runPipeline(ctx, download, "/unused", t.TempDir(), []Analyzer{a})
 
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.NotContains(t, a.analyzed, "b/two", "repos arriving after cancellation are not analyzed")

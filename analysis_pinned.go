@@ -22,29 +22,21 @@ type Analysis struct {
 
 // PinnedAnalyzer checks what fraction of GitHub Actions in each repository
 // are pinned to a full-length commit SHA or OCI digest.
-type PinnedAnalyzer struct {
-	resultDir string
-	results   []Analysis
-}
+type PinnedAnalyzer struct{}
 
-func NewPinnedAnalyzer(resultDir string) *PinnedAnalyzer {
-	return &PinnedAnalyzer{resultDir: resultDir}
-}
+func NewPinnedAnalyzer() *PinnedAnalyzer { return &PinnedAnalyzer{} }
 
 func (p *PinnedAnalyzer) Name() string { return "pinned" }
 
-func (p *PinnedAnalyzer) Analyze(_ context.Context, repoPath, repo string) error {
+func (p *PinnedAnalyzer) Analyze(_ context.Context, repoPath, repo string) (any, error) {
 	analysis, err := analyseRepository(repoPath, repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	p.results = append(p.results, analysis)
-	return nil
+	return analysis, nil
 }
 
-func (p *PinnedAnalyzer) Close() error {
-	return writeJSON(filepath.Join(p.resultDir, "pinned.json"), p.results)
-}
+func (p *PinnedAnalyzer) Close() error { return nil }
 
 func analyseRepository(dir string, repo string) (Analysis, error) {
 	analysis := Analysis{Repository: repo}

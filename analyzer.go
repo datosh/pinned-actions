@@ -12,12 +12,14 @@ import (
 // downloaded repository. Offline analyzers inspect the local checkout;
 // online analyzers may additionally call external APIs.
 //
-// Analyze is called once per repository. Close is called exactly once after
-// all repositories have been processed; implementations should flush any
-// accumulated results to disk there.
+// Analyze is called once per repository and returns that repository's result,
+// which the runner appends as one line to <result-dir>/<Name()>.jsonl. A nil
+// result is not written (analyzers not yet ported still write their own file
+// in Close). Close is called exactly once after all repositories have been
+// processed.
 type Analyzer interface {
 	Name() string
-	Analyze(ctx context.Context, repoPath, repo string) error
+	Analyze(ctx context.Context, repoPath, repo string) (any, error)
 	Close() error
 }
 
@@ -28,7 +30,7 @@ var analyzerRegistry = []struct {
 	build func(config Config, client *github.Client) (Analyzer, error)
 }{
 	{"pinned", func(config Config, _ *github.Client) (Analyzer, error) {
-		return NewPinnedAnalyzer(config.ResultDir), nil
+		return NewPinnedAnalyzer(), nil
 	}},
 	{"zizmor", func(config Config, _ *github.Client) (Analyzer, error) {
 		a, err := NewZizmorAnalyzer(config.ResultDir)

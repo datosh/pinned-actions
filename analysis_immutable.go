@@ -33,7 +33,13 @@ func NewImmutableReleasesAnalyzer(client *github.Client, resultDir string) *Immu
 
 func (im *ImmutableReleasesAnalyzer) Name() string { return "immutable" }
 
-func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string) error {
+// Analyze collects results itself and writes them in Close (not yet ported to
+// per-repository results).
+func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string) (any, error) {
+	return nil, im.analyze(ctx, repo)
+}
+
+func (im *ImmutableReleasesAnalyzer) analyze(ctx context.Context, repo string) error {
 	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	parts := strings.SplitN(repo, "/", 2)

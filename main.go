@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/google/go-github/v93/github"
@@ -16,7 +17,7 @@ const usage = `Usage: pinned-actions <command> [flags]
 
 Commands:
   scan           Download repositories and run analyzers
-  export-pinned  Export pinned.json to the format expected by the frontend
+  export-pinned  Export pinned.jsonl to the format expected by the frontend
   export-zizmor  Export zizmor.json to a slimmed per-rule-count format for the frontend
 
 Run 'pinned-actions <command> -h' for command-specific flags.
@@ -87,7 +88,7 @@ func runScan(args []string) {
 	}
 
 	downloader := NewRepositoryDownloader(client, config)
-	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, analyzers); err != nil {
+	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, config.ResultDir, analyzers); err != nil {
 		fatal("scan failed", "error", err)
 	}
 }
@@ -98,9 +99,23 @@ func runScan(args []string) {
 func runPipeline(
 	ctx context.Context,
 	download func(context.Context, chan string) error,
-	downloadDir string,
+	downloadDir, resultDir string,
 	analyzers []Analyzer,
 ) error {
+	// Each analyzer's per-repository results are appended to its own file as
+	// they arrive, so an interrupted run keeps everything analyzed so far.
+	writers := make([]*jsonlWriter, len(analyzers))
+	for i, a := range analyzers {
+		w, err := newJSONLWriter(filepath.Join(resultDir, a.Name()+".jsonl"))
+		if err != nil {
+			for _, opened := range writers[:i] {
+				_ = opened.Close()
+			}
+			return err
+		}
+		writers[i] = w
+	}
+
 	downloaded := make(chan string)
 	downloadErr := make(chan error, 1)
 
@@ -116,15 +131,26 @@ func runPipeline(
 		if ctx.Err() != nil {
 			continue // keep draining so the downloader can finish
 		}
-		for _, a := range analyzers {
-			if err := a.Analyze(ctx, downloadDir, repo); err != nil {
+		for i, a := range analyzers {
+			result, err := a.Analyze(ctx, downloadDir, repo)
+			if err != nil {
 				slog.Error("analysis failed", "analyzer", a.Name(), "repo", repo, "error", err)
+				continue
+			}
+			if result == nil {
+				continue
+			}
+			if err := writers[i].Write(result); err != nil {
+				slog.Error("saving result failed", "analyzer", a.Name(), "repo", repo, "error", err)
 			}
 		}
 	}
 
 	errs := []error{<-downloadErr}
-	for _, a := range analyzers {
+	for i, a := range analyzers {
+		if err := writers[i].Close(); err != nil {
+			errs = append(errs, fmt.Errorf("closing results of %s: %w", a.Name(), err))
+		}
 		if err := a.Close(); err != nil {
 			errs = append(errs, fmt.Errorf("closing analyzer %s: %w", a.Name(), err))
 		}

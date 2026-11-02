@@ -29,7 +29,7 @@ func parseExportArgs(name, defaultOut string, args []string) exportArgs {
 }
 
 // runExportPinned implements the "export-pinned" subcommand. It reads
-// pinned.json from the result directory and writes it to a specified output
+// pinned.jsonl from the result directory and writes it to a specified output
 // file in the format expected by the frontend.
 //
 // Usage:
@@ -39,8 +39,8 @@ func runExportPinned(args []string) {
 	a := parseExportArgs("export-pinned", "web.json", args)
 
 	// Reading into []Analysis also validates the file's shape.
-	var results []Analysis
-	if err := readJSON(filepath.Join(a.ResultDir, "pinned.json"), &results); err != nil {
+	results, err := readJSONL[Analysis](filepath.Join(a.ResultDir, "pinned.jsonl"))
+	if err != nil {
 		fatal("export failed", "error", err)
 	}
 
