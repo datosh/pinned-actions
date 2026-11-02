@@ -4,8 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearLabels = document.getElementById('yearLabels');
     let chart = null;
 
+    // The slices of a year, greens first. "Fully Locked" only exists for years
+    // scanned with lockfile data (recognizable by with-lockfile); older years
+    // keep their three slices.
+    function segments(yearData) {
+        const slices = [{ label: 'Fully Pinned', count: yearData.pinned, color: '#5D8234' }];
+        if (yearData['with-lockfile'] !== undefined) {
+            slices.push({ label: 'Fully Locked', count: yearData.locked || 0, color: '#8FBF5A' });
+        }
+        slices.push(
+            { label: 'Partially Pinned', count: yearData['partially-pinned'], color: '#FFD23F' },
+            { label: 'Unpinned', count: yearData.unpinned, color: '#C64756' },
+        );
+        return slices;
+    }
+
+    function totalUsingActions(yearData) {
+        return segments(yearData).reduce((sum, slice) => sum + slice.count, 0);
+    }
+
     function renderChart(yearData) {
-        const total = yearData.pinned + yearData['partially-pinned'] + yearData.unpinned;
+        const slices = segments(yearData);
+        const total = totalUsingActions(yearData);
         const ctx = document.getElementById('pinnedActionsChart').getContext('2d');
 
         if (chart) {
@@ -15,10 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Fully Pinned', 'Partially Pinned', 'Unpinned'],
+                labels: slices.map(slice => slice.label),
                 datasets: [{
-                    data: [yearData.pinned, yearData['partially-pinned'], yearData.unpinned],
-                    backgroundColor: ['#5D8234', '#FFD23F', '#C64756'],
+                    data: slices.map(slice => slice.count),
+                    backgroundColor: slices.map(slice => slice.color),
                     borderWidth: 1
                 }]
             },
@@ -43,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fills the numbers in the text from the newest year. The HTML keeps the
     // last hand-written values, which stay when the data lacks a field.
     function updateSummary(latest) {
-        const using = latest.pinned + latest['partially-pinned'] + latest.unpinned;
+        const using = totalUsingActions(latest);
         document.getElementById('fullyPinnedPercent').textContent = Math.round(latest.pinned / using * 100);
 
         if (latest.scanned) {
