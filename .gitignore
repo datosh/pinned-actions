@@ -32,3 +32,6 @@ pinned-actions
 
 .idea
 TASKS.md
+
+# Downloaded scan artifacts
+scan-results*.zip
