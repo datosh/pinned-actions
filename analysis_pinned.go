@@ -83,24 +83,32 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 		filepath.Join(repoPath, ".renovaterc.json"),
 		filepath.Join(repoPath, ".renovaterc.json5"),
 	}
-	for _, path := range renovatePaths {
-		found, err := exists(path)
-		if err != nil {
-			return analysis, fmt.Errorf("checking renovate config: %w", err)
-		}
-		if found {
-			analysis.HasRenovate = true
-			break
-		}
+	analysis.HasRenovate, err = anyExists(renovatePaths)
+	if err != nil {
+		return analysis, fmt.Errorf("checking renovate config: %w", err)
 	}
 
-	dependabotPath := filepath.Join(repoPath, ".github", "dependabot.yml")
-	analysis.HasDependabot, err = exists(dependabotPath)
+	// https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+	analysis.HasDependabot, err = anyExists([]string{
+		filepath.Join(repoPath, ".github", "dependabot.yml"),
+		filepath.Join(repoPath, ".github", "dependabot.yaml"),
+	})
 	if err != nil {
 		return analysis, fmt.Errorf("checking dependabot config: %w", err)
 	}
 
 	return analysis, nil
+}
+
+// anyExists returns whether at least one of the given paths exists.
+func anyExists(paths []string) (bool, error) {
+	for _, path := range paths {
+		found, err := exists(path)
+		if err != nil || found {
+			return found, err
+		}
+	}
+	return false, nil
 }
 
 // countActions adds the distinct actions referenced below dirs to analysis.

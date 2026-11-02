@@ -116,3 +116,48 @@ func TestPinnedAnalyzer(t *testing.T) {
 		})
 	}
 }
+
+func TestAnalyseRepositoryConfigDetection(t *testing.T) {
+	tests := []struct {
+		file           string
+		wantRenovate   bool
+		wantDependabot bool
+	}{
+		{file: "renovate.json", wantRenovate: true},
+		{file: "renovate.json5", wantRenovate: true},
+		{file: ".github/renovate.json", wantRenovate: true},
+		{file: ".github/renovate.json5", wantRenovate: true},
+		{file: ".gitlab/renovate.json", wantRenovate: true},
+		{file: ".gitlab/renovate.json5", wantRenovate: true},
+		{file: ".renovaterc", wantRenovate: true},
+		{file: ".renovaterc.json", wantRenovate: true},
+		{file: ".renovaterc.json5", wantRenovate: true},
+		{file: ".github/dependabot.yml", wantDependabot: true},
+		{file: ".github/dependabot.yaml", wantDependabot: true},
+		{file: "README.md"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.file, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "owner", "repo", test.file)
+			require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+			require.NoError(t, os.WriteFile(path, nil, 0o644))
+
+			got, err := analyseRepository(dir, "owner/repo")
+			require.NoError(t, err)
+			assert.Equal(t, test.wantRenovate, got.HasRenovate)
+			assert.Equal(t, test.wantDependabot, got.HasDependabot)
+		})
+	}
+
+	t.Run("no config", func(t *testing.T) {
+		dir := t.TempDir()
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "owner", "repo"), 0o755))
+
+		got, err := analyseRepository(dir, "owner/repo")
+		require.NoError(t, err)
+		assert.False(t, got.HasRenovate)
+		assert.False(t, got.HasDependabot)
+	})
+}
