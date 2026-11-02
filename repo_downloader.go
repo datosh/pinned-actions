@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 	"syscall"
+	"time"
 
 	"github.com/google/go-github/v93/github"
 )
@@ -21,16 +22,28 @@ var blockedRepos = []string{
 	"go-xorm/xorm",
 }
 
+// maxIncompleteRetries bounds how often one search is repeated when GitHub
+// reports incomplete results.
+const maxIncompleteRetries = 5
+
 type RepositoryDownloader struct {
 	client *github.Client
 	config Config
+	// clone fetches one repository; replaced in tests.
+	clone func(*github.Repository) error
+	// retryDelay is the first wait before retrying incomplete results; it
+	// doubles with every further retry.
+	retryDelay time.Duration
 }
 
 func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDownloader {
-	return &RepositoryDownloader{
-		client: client,
-		config: config,
+	r := &RepositoryDownloader{
+		client:     client,
+		config:     config,
+		retryDelay: 2 * time.Second,
 	}
+	r.clone = r.downloadRepository
+	return r
 }
 
 func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan string) (err error) {
@@ -55,6 +68,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 	}()
 
+	incompleteRetries := 0
 	for i := 0; i < r.config.MaxPages; i++ {
 		query := buildQuery(minStars, maxStars)
 		log.Printf("Searching repos with: %s\n", query)
@@ -68,30 +82,68 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 
 		if searchResult.GetIncompleteResults() {
-			log.Printf("[WARN] GitHub returned incomplete results for query %q — retrying\n", query)
-			i--
+			if incompleteRetries >= maxIncompleteRetries {
+				return fmt.Errorf("incomplete results for query %q after %d retries", query, incompleteRetries)
+			}
+			delay := r.retryDelay << incompleteRetries
+			incompleteRetries++
+			log.Printf("[WARN] GitHub returned incomplete results for query %q — retrying in %s\n", query, delay)
+			if err := sleepContext(ctx, delay); err != nil {
+				return err
+			}
+			i-- // a retry does not use up a page
 			continue
 		}
+		incompleteRetries = 0
 
 		log.Printf("Found %d repositories\n", len(searchResult.Repositories))
 
+		newRepos := 0
+		lastStars := maxStars
 		for _, repository := range searchResult.Repositories {
-			maxStars = repository.GetStargazersCount() - 1
-			stars[repository.GetFullName()] = repository.GetStargazersCount()
-			if err := r.downloadRepository(repository); err != nil {
+			name := repository.GetFullName()
+			lastStars = repository.GetStargazersCount()
+			if _, seen := stars[name]; seen {
+				continue
+			}
+			newRepos++
+			stars[name] = lastStars
+			if err := r.clone(repository); err != nil {
 				log.Printf("[ERROR] downloading repository: %v", err)
 				continue
 			}
-			downloaded <- repository.GetFullName()
+			downloaded <- name
 		}
 
 		if len(searchResult.Repositories) < r.config.PerPage {
 			log.Printf("Handled all pages after %d requests.\n", i+1)
 			break
 		}
+
+		// Repos tied with the last one on this page may not have fit on it, so
+		// the next query includes lastStars again; repos already seen are skipped.
+		// If a full page brought nothing new, the tie is larger than a page and
+		// we have to move on, losing the remainder of it.
+		maxStars = lastStars
+		if newRepos == 0 {
+			log.Printf("[WARN] more than %d repositories with %d stars; some are skipped\n", r.config.PerPage, lastStars)
+			maxStars--
+		}
 	}
 
 	return nil
+}
+
+// sleepContext waits for d or until ctx is cancelled.
+func sleepContext(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
 }
 
 func (r *RepositoryDownloader) writeStars(stars map[string]int) error {
