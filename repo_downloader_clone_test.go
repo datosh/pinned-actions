@@ -39,8 +39,8 @@ func TestDownloadRepositoryRefreshesExistingClone(t *testing.T) {
 	d := newTestDownloader(t, nil, 1)
 	d.config.DownloadDir = t.TempDir()
 	repo := &github.Repository{
-		FullName: github.Ptr("owner/repo"),
-		CloneURL: github.Ptr("file://" + origin),
+		FullName: new("owner/repo"),
+		CloneURL: new("file://" + origin),
 	}
 	checkout := filepath.Join(d.config.DownloadDir, "owner", "repo", ".github", "workflows", "ci.yml")
 	assertCheckout := func(want string) {
