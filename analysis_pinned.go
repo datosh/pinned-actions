@@ -62,31 +62,14 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 	repoPath := filepath.Join(dir, repo)
 	workflowsPath := filepath.Join(repoPath, ".github", "workflows")
 
-	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
-
-	actions, err := r.ListPath(workflowsPath)
+	// A repository without workflows simply uses no actions.
+	hasWorkflows, err := exists(workflowsPath)
 	if err != nil {
-		return analysis, fmt.Errorf("listing actions: %w", err)
+		return analysis, fmt.Errorf("checking %s: %w", workflowsPath, err)
 	}
-
-	for _, action := range actions.Entities {
-		switch action.Type {
-		case "container":
-			if len(action.Ref) == 71 && strings.HasPrefix(action.Ref, "sha256:") {
-				analysis.ActionsPinned++
-				analysis.ActionsTotal++
-			} else {
-				analysis.ActionsTotal++
-			}
-		case "action":
-			if len(action.Ref) == 40 && isHex(action.Ref) {
-				analysis.ActionsPinned++
-				analysis.ActionsTotal++
-			} else {
-				analysis.ActionsTotal++
-			}
-		default:
-			log.Printf("[WARN] unknown action type: %s", action.Type)
+	if hasWorkflows {
+		if err := countActions(workflowsPath, &analysis); err != nil {
+			return analysis, err
 		}
 	}
 
@@ -122,7 +105,42 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 	return analysis, nil
 }
 
+// countActions adds the actions referenced below workflowsPath to analysis.
+func countActions(workflowsPath string, analysis *Analysis) error {
+	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
+
+	actions, err := r.ListPath(workflowsPath)
+	if err != nil {
+		return fmt.Errorf("listing actions: %w", err)
+	}
+
+	for _, action := range actions.Entities {
+		switch action.Type {
+		case "container":
+			if len(action.Ref) == 71 && strings.HasPrefix(action.Ref, "sha256:") {
+				analysis.ActionsPinned++
+				analysis.ActionsTotal++
+			} else {
+				analysis.ActionsTotal++
+			}
+		case "action":
+			if len(action.Ref) == 40 && isHex(action.Ref) {
+				analysis.ActionsPinned++
+				analysis.ActionsTotal++
+			} else {
+				analysis.ActionsTotal++
+			}
+		default:
+			log.Printf("[WARN] unknown action type: %s", action.Type)
+		}
+	}
+	return nil
+}
+
 func isHex(s string) bool {
+	if s == "" {
+		return false
+	}
 	for _, r := range s {
 		if (r < '0' || r > '9') && (r < 'a' || r > 'f') {
 			return false

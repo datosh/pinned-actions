@@ -20,7 +20,7 @@ func TestIsHex(t *testing.T) {
 		{name: "uppercase hex rejected", input: "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2", want: false},
 		{name: "mixed case rejected", input: "a1B2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", want: false},
 		{name: "non-hex character", input: "g1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", want: false},
-		{name: "empty string", input: "", want: true},
+		{name: "empty string", input: "", want: false},
 	}
 
 	for _, test := range tests {
@@ -71,6 +71,19 @@ func TestPinnedAnalyzer(t *testing.T) {
 		{
 			name:       "Local action",
 			repo:       "local",
+			wantPinned: 0,
+			wantTotal:  0,
+		},
+		{
+			name:              "No workflows directory",
+			repo:              "no-workflows",
+			wantPinned:        0,
+			wantTotal:         0,
+			wantHasDependabot: true,
+		},
+		{
+			name:       "No .github directory",
+			repo:       "no-github",
 			wantPinned: 0,
 			wantTotal:  0,
 		},
