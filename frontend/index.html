@@ -34,16 +34,12 @@
             <!-- Year Slider -->
             <div class="mb-4 text-center">
                 <label class="block text-sm font-medium text-gray-700 mb-3">
-                    Select Year: <span id="selectedYear" class="font-bold">2026</span>
+                    Select Year: <span id="selectedYear" class="font-bold"></span>
                 </label>
                 <div class="px-2">
-                    <input type="range" id="yearSlider" min="0" max="2" step="1" value="2"
+                    <input type="range" id="yearSlider" min="0" max="0" step="1" value="0"
                         class="w-full accent-gray-700">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>2024</span>
-                        <span>2025</span>
-                        <span>2026</span>
-                    </div>
+                    <div id="yearLabels" class="flex justify-between text-xs text-gray-500 mt-1"></div>
                 </div>
             </div>
             <canvas id="pinnedActionsChart"></canvas>
