@@ -27,5 +27,8 @@ jobs:
         persist-credentials: false
     - name: Run Zizmor
       uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+      with:
+        # Only audit our own workflows; testdata/ holds intentionally unpinned fixtures.
+        inputs: .github/workflows
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
