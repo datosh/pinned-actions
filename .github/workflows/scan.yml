@@ -1,0 +1,70 @@
+name: Scan
+
+# Scans the most popular repositories and keeps the results as a workflow artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: Number of search pages to scan, 100 repositories each
+        type: string
+        default: '1'
+      analyzers:
+        description: Comma-separated analyzers to run
+        type: string
+        default: pinned,zizmor,lockfile,immutable
+
+permissions: {}
+
+jobs:
+  scan:
+    name: Scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: false
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+    - name: Set up Go
+      uses: actions/setup-go@v7.0.0
+      with:
+        go-version-file: go.mod
+    - name: Install zizmor
+      # The 1.32 pre-release reads actions.lock, like the zizmor workflow does.
+      # Keep the version at or above minZizmorVersion in analysis_zizmor.go.
+      run: |
+        pipx install zizmor==1.32.0rc2
+        zizmor --version
+    - name: Install gh-actions-lock
+      env:
+        GH_TOKEN: ${{ github.token }}
+      # Keep the version at or above minLockfileCLIVersion in analysis_lockfile.go.
+      run: gh extension install github/gh-actions-lock --pin v0.4.1
+    - name: Scan
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        PAGES: ${{ inputs.pages }}
+        ANALYZERS: ${{ inputs.analyzers }}
+      run: |
+        go run . scan \
+          -max-pages "$PAGES" -per-page 100 \
+          -analyzer "$ANALYZERS" \
+          -download-dir "$RUNNER_TEMP/repos" -result-dir results
+    - name: Export website data
+      if: ${{ !cancelled() }}
+      run: |
+        go run . export-pinned --result-dir results --year "$(date -u +%Y)" --out results/pinned-web.json
+        go run . export-zizmor --result-dir results --out results/zizmor-web.js
+    - name: Upload results
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: scan-results
+        path: results/
+        if-no-files-found: error
+        retention-days: 30
