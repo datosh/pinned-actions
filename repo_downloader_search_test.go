@@ -83,7 +83,7 @@ func newTestDownloader(t *testing.T, client *github.Client, perPage int) *Reposi
 	config.ResultDir = t.TempDir()
 
 	d := NewRepositoryDownloader(client, *config)
-	d.clone = func(*github.Repository) error { return nil }
+	d.clone = func(context.Context, *github.Repository) error { return nil }
 	d.retryDelay = 0
 	return d
 }

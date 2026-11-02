@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/google/go-github/v93/github"
 )
@@ -58,7 +60,16 @@ func runScan(args []string) {
 		log.Fatalf("creating GitHub client: %v", err)
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-signals
+		log.Printf("Received %v; flushing results (signal again to abort)", sig)
+		signal.Stop(signals) // a second signal now kills the process
+		cancel()
+	}()
 
 	if err := os.MkdirAll(config.ResultDir, 0o755); err != nil {
 		log.Fatalf("creating result directory: %v", err)
@@ -96,6 +107,9 @@ func runPipeline(
 	}()
 
 	for repo := range downloaded {
+		if ctx.Err() != nil {
+			continue // keep draining so the downloader can finish
+		}
 		for _, a := range analyzers {
 			if err := a.Analyze(ctx, downloadDir, repo); err != nil {
 				log.Printf("[ERROR] %s: analysing %s: %v", a.Name(), repo, err)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,4 +85,34 @@ func TestRunPipeline(t *testing.T) {
 			assert.Equal(t, 1, a.closed)
 		})
 	}
+}
+
+func TestRunPipelineCancelledStillFlushes(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	download := func(ctx context.Context, out chan string) error {
+		out <- "a/one"
+		cancel() // e.g. SIGINT
+		out <- "b/two"
+		return ctx.Err()
+	}
+	a := &fakeAnalyzer{}
+
+	err := runPipeline(ctx, download, "/unused", []Analyzer{a})
+
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.NotContains(t, a.analyzed, "b/two", "repos arriving after cancellation are not analyzed")
+	assert.Equal(t, 1, a.closed, "analyzers are closed so results are written")
+}
+
+func TestRunGitHonorsContext(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	assert.Error(t, runGit(ctx, "version"))
+	assert.NoError(t, runGit(context.Background(), "version"))
 }

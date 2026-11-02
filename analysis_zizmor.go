@@ -47,7 +47,7 @@ func NewZizmorAnalyzer(resultDir string) (*ZizmorAnalyzer, error) {
 
 func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
 
-func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error {
+func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) error {
 	githubDir := filepath.Join(repoPath, repo, ".github")
 	hasGithubDir, err := exists(githubDir)
 	if err != nil {
@@ -59,7 +59,7 @@ func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error
 	}
 
 	var stdout bytes.Buffer
-	cmd := exec.Command(z.zizmorBin,
+	cmd := exec.CommandContext(ctx, z.zizmorBin,
 		"--format=json",
 		"--offline",
 		"--no-exit-codes",

@@ -32,7 +32,7 @@ type RepositoryDownloader struct {
 	client *github.Client
 	config Config
 	// clone fetches one repository; replaced in tests.
-	clone func(*github.Repository) error
+	clone func(context.Context, *github.Repository) error
 	// retryDelay is the first wait before retrying incomplete results; it
 	// doubles with every further retry.
 	retryDelay time.Duration
@@ -103,6 +103,9 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		newRepos := 0
 		lastStars := maxStars
 		for _, repository := range searchResult.Repositories {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			name := repository.GetFullName()
 			lastStars = repository.GetStargazersCount()
 			if _, seen := stars[name]; seen {
@@ -110,7 +113,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			}
 			newRepos++
 			stars[name] = lastStars
-			if err := r.clone(repository); err != nil {
+			if err := r.clone(ctx, repository); err != nil {
 				log.Printf("[ERROR] downloading repository: %v", err)
 				continue
 			}
@@ -161,7 +164,7 @@ func (r *RepositoryDownloader) writeStars(stars map[string]int) error {
 	return f.Close()
 }
 
-func (r *RepositoryDownloader) downloadRepository(repository *github.Repository) error {
+func (r *RepositoryDownloader) downloadRepository(ctx context.Context, repository *github.Repository) error {
 	if slices.Contains(blockedRepos, repository.GetFullName()) {
 		return fmt.Errorf("repository %s is blocked", repository.GetFullName())
 	}
@@ -177,7 +180,7 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 		return fmt.Errorf("checking %s: %w", cloneInto, err)
 	}
 	if cloned {
-		err := refreshClone(cloneInto)
+		err := refreshClone(ctx, cloneInto)
 		if err == nil {
 			return nil
 		}
@@ -188,12 +191,12 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 		}
 	}
 
-	err = runGit("clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto)
+	err = runGit(ctx, "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto)
 	if err != nil {
 		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
 	}
 
-	err = runGit("-C", cloneInto, "sparse-checkout", "set", ".github")
+	err = runGit(ctx, "-C", cloneInto, "sparse-checkout", "set", ".github")
 	if err != nil {
 		return fmt.Errorf("setting sparse checkout for %s: %w", cloneInto, err)
 	}
@@ -203,17 +206,17 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 
 // refreshClone moves an existing shallow clone to the current remote HEAD, so
 // repeated scans do not analyze stale checkouts.
-func refreshClone(dir string) error {
+func refreshClone(ctx context.Context, dir string) error {
 	log.Printf("Refreshing existing clone: %s\n", dir)
-	if err := runGit("-C", dir, "fetch", "--depth", "1", "origin", "HEAD"); err != nil {
+	if err := runGit(ctx, "-C", dir, "fetch", "--depth", "1", "origin", "HEAD"); err != nil {
 		return err
 	}
-	return runGit("-C", dir, "reset", "--hard", "FETCH_HEAD")
+	return runGit(ctx, "-C", dir, "reset", "--hard", "FETCH_HEAD")
 }
 
 // runGit runs git and includes its output in the returned error.
-func runGit(args ...string) error {
-	out, err := exec.Command("git", args...).CombinedOutput()
+func runGit(ctx context.Context, args ...string) error {
+	out, err := exec.CommandContext(ctx, "git", args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, bytes.TrimSpace(out))
 	}

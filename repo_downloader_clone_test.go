@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -50,17 +51,17 @@ func TestDownloadRepositoryRefreshesExistingClone(t *testing.T) {
 	}
 
 	commit("v1")
-	require.NoError(t, d.downloadRepository(repo))
+	require.NoError(t, d.downloadRepository(context.Background(), repo))
 	assertCheckout("v1")
 
 	commit("v2")
-	require.NoError(t, d.downloadRepository(repo))
+	require.NoError(t, d.downloadRepository(context.Background(), repo))
 	assertCheckout("v2")
 
 	// A clone that git cannot use is replaced rather than failing the repo.
 	commit("v3")
 	head := filepath.Join(d.config.DownloadDir, "owner", "repo", ".git", "HEAD")
 	require.NoError(t, os.WriteFile(head, []byte("garbage"), 0o644))
-	require.NoError(t, d.downloadRepository(repo))
+	require.NoError(t, d.downloadRepository(context.Background(), repo))
 	assertCheckout("v3")
 }
