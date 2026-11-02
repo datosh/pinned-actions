@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,9 @@ type ZizmorResult struct {
 	Repository string          `json:"repository"`
 	UsesGHA    bool            `json:"uses_gha"`
 	Findings   []ZizmorFinding `json:"findings"`
+	// Error is set when zizmor could not analyze the repository; Findings is
+	// then empty and says nothing about the repository.
+	Error string `json:"error,omitempty"`
 }
 
 // ZizmorAnalyzer runs zizmor against the .github/ directory of each
@@ -77,7 +81,7 @@ func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) (an
 		return noGHA, nil
 	}
 
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, z.zizmorBin,
 		"--format=json",
 		"--offline",
@@ -87,28 +91,58 @@ func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) (an
 		"--collect=workflows,actions",
 		githubDir,
 	)
-	cmd.Stdout = &stdout
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 
 	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("running zizmor: %w", ctx.Err())
+		}
+		var exitErr *exec.ExitError
+		if !errors.As(err, &exitErr) {
+			// zizmor could not be started: a problem of the setup, not of the repository.
+			return nil, fmt.Errorf("running zizmor: %w", err)
+		}
 		// Exit code 3 means zizmor found no auditable inputs (e.g. .github/
 		// exists but contains only issue templates or a dependabot.yml, not
 		// workflows or actions). The repo does not use GHA in a meaningful way.
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
+		if exitErr.ExitCode() == 3 {
 			return noGHA, nil
 		}
-		return nil, fmt.Errorf("running zizmor: %w", err)
+		reason := fmt.Sprintf("zizmor exited with status %d", exitErr.ExitCode())
+		if line := lastLine(stderr.Bytes()); line != "" {
+			reason += ": " + line
+		}
+		return zizmorFailure(repo, reason), nil
 	}
 
 	findings, err := parseZizmorOutput(stdout.Bytes(), repoPath, repo)
 	if err != nil {
-		return nil, fmt.Errorf("parsing zizmor output: %w", err)
+		return zizmorFailure(repo, "unreadable zizmor output: "+err.Error()), nil
 	}
 
 	return ZizmorResult{Repository: repo, UsesGHA: true, Findings: findings}, nil
 }
 
 func (z *ZizmorAnalyzer) Close() error { return nil }
+
+// zizmorFailure is the result for a repository that zizmor cannot analyze (it
+// crashes on some valid workflows). Keeping it, with the reason, stops the
+// repository from silently disappearing from the data; exports skip it.
+func zizmorFailure(repo, reason string) ZizmorResult {
+	slog.Warn("zizmor failed", "repo", repo, "reason", reason)
+	return ZizmorResult{Repository: repo, UsesGHA: true, Findings: []ZizmorFinding{}, Error: reason}
+}
+
+// lastLine returns the last non-empty line of zizmor's output, shortened. For
+// a failure it is the root cause; the first lines are progress messages.
+func lastLine(output []byte) string {
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	line := []rune(strings.TrimSpace(lines[len(lines)-1]))
+	if len(line) > 200 {
+		line = line[:200]
+	}
+	return string(line)
+}
 
 // zizmorRawFinding mirrors the relevant subset of zizmor's JSON output.
 type zizmorRawFinding struct {

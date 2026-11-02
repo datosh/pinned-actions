@@ -130,6 +130,25 @@ func TestSetYearRejectsInvalidFile(t *testing.T) {
 	assert.ErrorContains(t, setYear(path, "2026", PinnedBuckets{}), "parsing")
 }
 
+func TestWebResultsSkipsRepositoriesZizmorFailedOn(t *testing.T) {
+	raw := []ZizmorResult{
+		{Repository: "a/ok", UsesGHA: true, Findings: []ZizmorFinding{
+			{Rule: "artipacked", Severity: "Low"},
+			{Rule: "artipacked", Severity: "Low"},
+		}},
+		{Repository: "a/crashed", UsesGHA: true, Findings: []ZizmorFinding{}, Error: "zizmor exited with status 1"},
+		{Repository: "a/no-actions"},
+	}
+
+	web, failed := webResults(raw, map[string]int{"a/ok": 10, "a/crashed": 20, "a/no-actions": 30})
+
+	assert.Equal(t, 1, failed)
+	assert.Equal(t, []ZizmorWebResult{
+		{Repository: "a/ok", UsesGHA: true, Stars: 10, Rules: []ZizmorWebRule{{Rule: "artipacked", Severity: "Low", Count: 2}}},
+		{Repository: "a/no-actions", Stars: 30, Rules: []ZizmorWebRule{}},
+	}, web)
+}
+
 func TestParseExportArgs(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		got := parseExportArgs("export-test", "default-out.json", nil)

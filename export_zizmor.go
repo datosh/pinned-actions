@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -44,14 +45,9 @@ func runExportZizmor(args []string) {
 		fatal("export failed", "error", err)
 	}
 
-	web := make([]ZizmorWebResult, 0, len(raw))
-	for _, r := range raw {
-		web = append(web, ZizmorWebResult{
-			Repository: r.Repository,
-			UsesGHA:    r.UsesGHA,
-			Stars:      stars[r.Repository],
-			Rules:      aggregateRules(r.Findings),
-		})
+	web, failed := webResults(raw, stars)
+	if failed > 0 {
+		slog.Warn("skipped repositories zizmor could not analyze", "count", failed)
 	}
 
 	jsonData, err := json.Marshal(web)
@@ -70,6 +66,25 @@ func runExportZizmor(args []string) {
 		total += len(r.Rules)
 	}
 	fmt.Printf("Exported %d repositories (%d unique rule entries) to %s\n", len(web), total, a.Out)
+}
+
+// webResults converts zizmor results into the website format. Repositories
+// zizmor failed on are left out, not shown as clean, and counted.
+func webResults(raw []ZizmorResult, stars map[string]int) (web []ZizmorWebResult, failed int) {
+	web = make([]ZizmorWebResult, 0, len(raw))
+	for _, r := range raw {
+		if r.Error != "" {
+			failed++
+			continue
+		}
+		web = append(web, ZizmorWebResult{
+			Repository: r.Repository,
+			UsesGHA:    r.UsesGHA,
+			Stars:      stars[r.Repository],
+			Rules:      aggregateRules(r.Findings),
+		})
+	}
+	return web, failed
 }
 
 // aggregateRules collapses a flat list of findings into per-(rule,severity)
