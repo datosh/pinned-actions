@@ -49,7 +49,11 @@ func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
 
 func (z *ZizmorAnalyzer) Analyze(_ context.Context, repoPath, repo string) error {
 	githubDir := filepath.Join(repoPath, repo, ".github")
-	if !exists(githubDir) {
+	hasGithubDir, err := exists(githubDir)
+	if err != nil {
+		return fmt.Errorf("checking %s: %w", githubDir, err)
+	}
+	if !hasGithubDir {
 		z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
 		return nil
 	}

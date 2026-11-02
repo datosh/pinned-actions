@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"syscall"
 
 	"github.com/google/go-github/v93/github"
 )
@@ -113,13 +116,17 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 	cloneInto := filepath.Join(r.config.DownloadDir, *repository.FullName)
 	log.Printf("Clone into: %s\n", cloneInto)
 
-	if exists(cloneInto) {
+	cloned, err := exists(cloneInto)
+	if err != nil {
+		return fmt.Errorf("checking %s: %w", cloneInto, err)
+	}
+	if cloned {
 		log.Printf("Repository already exists: %s\n", cloneInto)
 		// TODO: Fetch latest changes
 		return nil
 	}
 
-	err := exec.Command("git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto).Run()
+	err = exec.Command("git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto).Run()
 	if err != nil {
 		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
 	}
@@ -132,16 +139,18 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 	return nil
 }
 
-// exists returns whether the given file or directory exists
-func exists(path string) bool {
+// exists returns whether the given file or directory exists. A path below a
+// regular file (ENOTDIR) does not exist; any other stat failure, such as a
+// permission error, is returned to the caller.
+func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
-		return true
+		return true, nil
 	}
-	if os.IsNotExist(err) {
-		return false
+	if errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.ENOTDIR) {
+		return false, nil
 	}
-	panic(err)
+	return false, err
 }
 
 func buildQuery(minStars, maxStars int) string {

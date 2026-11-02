@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/stacklok/frizbee/pkg/replacer"
@@ -103,13 +102,21 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 		filepath.Join(repoPath, ".renovaterc.json"),
 		filepath.Join(repoPath, ".renovaterc.json5"),
 	}
-	analysis.HasRenovate = slices.ContainsFunc(renovatePaths, func(path string) bool {
-		return exists(path)
-	})
+	for _, path := range renovatePaths {
+		found, err := exists(path)
+		if err != nil {
+			return analysis, fmt.Errorf("checking renovate config: %w", err)
+		}
+		if found {
+			analysis.HasRenovate = true
+			break
+		}
+	}
 
 	dependabotPath := filepath.Join(repoPath, ".github", "dependabot.yml")
-	if exists(dependabotPath) {
-		analysis.HasDependabot = true
+	analysis.HasDependabot, err = exists(dependabotPath)
+	if err != nil {
+		return analysis, fmt.Errorf("checking dependabot config: %w", err)
 	}
 
 	return analysis, nil
