@@ -28,8 +28,7 @@ jobs:
     - name: Run Zizmor
       uses: zizmorcore/zizmor-action@v0.8.0
       with:
-        # zizmor 1.32 reads .github/workflows/actions.lock, so tag refs covered
-        # by it are accepted. Drop this pin once 1.32 is released.
-        version: v1.32.0rc2
+        # TODO: Drop this pin once 1.32 is released.
+        version: v1.32.0rc1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
