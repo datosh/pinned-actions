@@ -13,8 +13,11 @@ import (
 // ImmutableResult records whether the latest release of a repository is
 // marked as immutable using GitHub's Immutable Releases feature.
 type ImmutableResult struct {
-	Repository             string `json:"repository"`
-	LatestReleaseImmutable bool   `json:"latest_release_immutable"`
+	Repository string `json:"repository"`
+	// HasRelease is false when the repository has no published release, which
+	// is not the same as a mutable one.
+	HasRelease             bool `json:"has_release"`
+	LatestReleaseImmutable bool `json:"latest_release_immutable"`
 }
 
 // ImmutableReleasesAnalyzer checks whether the latest GitHub release for each
@@ -43,7 +46,7 @@ func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
-			// No releases published — not using immutable releases.
+			// No release published at all.
 			return ImmutableResult{Repository: repo}, nil
 		}
 		return nil, fmt.Errorf("fetching latest release for %s: %w", repo, err)
@@ -52,6 +55,7 @@ func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string
 
 	return ImmutableResult{
 		Repository:             repo,
+		HasRelease:             true,
 		LatestReleaseImmutable: release.GetImmutable(),
 	}, nil
 }
