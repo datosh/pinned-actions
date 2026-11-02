@@ -66,12 +66,17 @@ go run . export-zizmor --result-dir=results --out=frontend/zizmor-web.js
 ```
 
 `export-pinned` counts the repositories that use actions as fully pinned,
-partially pinned or unpinned, plus the number of repositories without actions
-and the scan date (`--scanned=YYYY-MM-DD`, default: when `pinned.jsonl` was last
-written). It stores them under `--year` in `frontend/pinned.json`, keeping the
-other years. The website fills the percentages and the "last updated" date in its
-text from the newest year. `--raw=FILE` additionally writes all per-repository results as one JSON
-array, e.g. for the downloadable data archive.
+locked, partially pinned or unpinned, plus the number of repositories without
+actions and the scan date (`--scanned=YYYY-MM-DD`, default: when `pinned.jsonl`
+was last written). A repository counts as pinned if all its actions are
+SHA-pinned; otherwise as locked if `lockfile.jsonl` says its
+[lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)
+is complete (the lockfile data is optional and the repository count with a
+lockfile is recorded as `with-lockfile`). It stores the counts under `--year` in
+`frontend/pinned.json`, keeping the other years. The website fills the
+percentages and the "last updated" date in its text from the newest year.
+`--raw=FILE` additionally writes all per-repository results as one JSON array,
+e.g. for the downloadable data archive.
 
 `export-zizmor` also reads `stars.json`, so run it against the same
 `--result-dir` as the scan.

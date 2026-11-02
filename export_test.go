@@ -21,10 +21,65 @@ func TestBucketPinned(t *testing.T) {
 		{Repository: "c/unpinned", ActionsTotal: 5, ActionsPinned: 0},
 	}
 
-	got := bucketPinned(results)
+	got := bucketPinned(results, nil)
 
 	assert.Equal(t, PinnedBuckets{Pinned: 2, PartiallyPinned: 1, Unpinned: 3, NoActions: 1}, got)
-	assert.Equal(t, PinnedBuckets{}, bucketPinned(nil))
+	assert.Equal(t, PinnedBuckets{}, bucketPinned(nil, nil))
+	assert.Nil(t, got.WithLockfile, "without lockfile data the count is unknown, not zero")
+}
+
+func TestBucketPinnedWithLockfiles(t *testing.T) {
+	results := []Analysis{
+		{Repository: "a/pinned-and-locked", ActionsTotal: 2, ActionsPinned: 2},
+		{Repository: "a/locked", ActionsTotal: 2, ActionsPinned: 0},
+		{Repository: "a/locked-partly-pinned", ActionsTotal: 3, ActionsPinned: 1},
+		{Repository: "a/incomplete-lockfile", ActionsTotal: 2, ActionsPinned: 1},
+		{Repository: "a/stale-lockfile", ActionsTotal: 2, ActionsPinned: 0},
+		{Repository: "a/malformed-lockfile", ActionsTotal: 1, ActionsPinned: 0},
+		{Repository: "a/no-lockfile", ActionsTotal: 1, ActionsPinned: 0},
+		{Repository: "a/not-in-lockfile-data", ActionsTotal: 1, ActionsPinned: 0},
+		{Repository: "a/lockfile-without-actions", ActionsTotal: 0},
+	}
+	lockfiles := map[string]LockfileResult{
+		"a/pinned-and-locked":        {HasLockfile: true, Complete: true},
+		"a/locked":                   {HasLockfile: true, Complete: true},
+		"a/locked-partly-pinned":     {HasLockfile: true, Complete: true},
+		"a/incomplete-lockfile":      {HasLockfile: true, Findings: []string{"not-pinned"}},
+		"a/stale-lockfile":           {HasLockfile: true, Findings: []string{"stale"}},
+		"a/malformed-lockfile":       {HasLockfile: true, Malformed: true},
+		"a/no-lockfile":              {},
+		"a/lockfile-without-actions": {HasLockfile: true},
+	}
+
+	got := bucketPinned(results, lockfiles)
+
+	withLockfile := 7
+	assert.Equal(t, PinnedBuckets{
+		Pinned:          1, // all SHA-pinned wins over a complete lockfile
+		Locked:          2, // complete lockfile, not all SHA-pinned
+		PartiallyPinned: 1, // a lockfile that is not complete does not help
+		Unpinned:        4, // including repos missing from the lockfile data
+		NoActions:       1,
+		WithLockfile:    &withLockfile,
+	}, got)
+}
+
+func TestReadLockfileResults(t *testing.T) {
+	dir := t.TempDir()
+
+	got, err := readLockfileResults(dir)
+	require.NoError(t, err)
+	assert.Nil(t, got, "the file is optional")
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "lockfile.jsonl"),
+		[]byte("{\"repository\":\"a/b\",\"has_lockfile\":true,\"complete\":true}\n"), 0o644))
+	got, err = readLockfileResults(dir)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]LockfileResult{"a/b": {Repository: "a/b", HasLockfile: true, Complete: true}}, got)
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "lockfile.jsonl"), []byte("not json\n"), 0o644))
+	_, err = readLockfileResults(dir)
+	assert.ErrorContains(t, err, "parsing")
 }
 
 func TestSetYear(t *testing.T) {

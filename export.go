@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,32 +39,69 @@ func parseExportArgs(name, defaultOut string, args []string, extra ...func(*flag
 }
 
 // PinnedBuckets counts the repositories that use actions by how many of those
-// actions are pinned, plus the ones that use none. NoActions and Scanned are
+// actions are pinned, plus the ones that use none. Fields added later are
 // missing for years recorded before they existed.
 type PinnedBuckets struct {
-	Pinned          int    `json:"pinned"`
-	PartiallyPinned int    `json:"partially-pinned"`
-	Unpinned        int    `json:"unpinned"`
-	NoActions       int    `json:"no-actions,omitempty"`
-	Scanned         string `json:"scanned,omitempty"` // YYYY-MM-DD
+	Pinned          int `json:"pinned"`
+	PartiallyPinned int `json:"partially-pinned"`
+	Unpinned        int `json:"unpinned"`
+	// Locked counts repositories that are not fully SHA-pinned, but whose
+	// lockfile covers all their actions.
+	Locked    int `json:"locked,omitempty"`
+	NoActions int `json:"no-actions,omitempty"`
+	// WithLockfile counts all repositories that have an actions.lock. It is
+	// only set when lockfile data was available, so that 0 differs from unknown.
+	WithLockfile *int   `json:"with-lockfile,omitempty"`
+	Scanned      string `json:"scanned,omitempty"` // YYYY-MM-DD
 }
 
-// bucketPinned sorts repositories into the disjoint buckets.
-func bucketPinned(results []Analysis) PinnedBuckets {
+// bucketPinned sorts repositories into the disjoint buckets. A repository
+// whose actions are all SHA-pinned counts as pinned, else one with a complete
+// lockfile as locked, else it is partially pinned or unpinned. lockfiles is
+// keyed by repository; nil means there is no lockfile data, and a repository
+// missing from it has no lockfile.
+func bucketPinned(results []Analysis, lockfiles map[string]LockfileResult) PinnedBuckets {
 	var b PinnedBuckets
+	withLockfile := 0
 	for _, r := range results {
+		lockfile := lockfiles[r.Repository]
+		if lockfile.HasLockfile {
+			withLockfile++
+		}
 		switch {
 		case r.ActionsTotal == 0:
 			b.NoActions++
 		case r.ActionsPinned == r.ActionsTotal:
 			b.Pinned++
+		case lockfile.Complete:
+			b.Locked++
 		case r.ActionsPinned > 0:
 			b.PartiallyPinned++
 		default:
 			b.Unpinned++
 		}
 	}
+	if lockfiles != nil {
+		b.WithLockfile = &withLockfile
+	}
 	return b
+}
+
+// readLockfileResults reads lockfile.jsonl from dir by repository. The file
+// is optional: scans without the lockfile analyzer give nil.
+func readLockfileResults(dir string) (map[string]LockfileResult, error) {
+	records, err := readJSONL[LockfileResult](filepath.Join(dir, "lockfile.jsonl"))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	byRepo := make(map[string]LockfileResult, len(records))
+	for _, r := range records {
+		byRepo[r.Repository] = r
+	}
+	return byRepo, nil
 }
 
 // setYear records buckets under year in the JSON file at path (year -> counts),
@@ -117,7 +155,15 @@ func runExportPinned(args []string) {
 		fatal("export failed", "error", err)
 	}
 
-	buckets := bucketPinned(results)
+	lockfiles, err := readLockfileResults(a.ResultDir)
+	if err != nil {
+		fatal("export failed", "error", err)
+	}
+	if lockfiles == nil {
+		slog.Info("no lockfile.jsonl found; exporting without lockfile data")
+	}
+
+	buckets := bucketPinned(results, lockfiles)
 	buckets.Scanned = scanned
 	if err := setYear(a.Out, year, buckets); err != nil {
 		fatal("export failed", "error", err)
