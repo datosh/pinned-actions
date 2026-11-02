@@ -7,22 +7,62 @@ The results are published at: [http://pin-gh-actions.kammel.dev/](http://pin-gh-
 ## Usage
 
 ```sh
-$ go run . --help
-Usage of GH Pinned Actions:
+$ go run .
+Usage: pinned-actions <command> [flags]
+
+Commands:
+  scan           Download repositories and run analyzers
+  export-pinned  Export pinned.json to the format expected by the frontend
+  export-zizmor  Export zizmor.json to a slimmed per-rule-count format for the frontend
+```
+
+### scan
+
+Downloads the most popular repositories (by stars) and runs the selected
+analyzers on each of them. Results are written to `--result-dir`, one file per
+analyzer (`pinned.json`, `zizmor.json`, `immutable.json`), plus `stars.json`.
+
+```sh
+$ go run . scan -h
+  -analyzer string
+        comma-separated list of analyzers to run (available: pinned, zizmor, immutable) (default "pinned")
   -download-dir string
         path to folder where repositories will be downloaded (default "/tmp/pinned")
   -max-pages int
         maximum number of pages to download (default 1)
   -per-page int
         number of repositories to download per page (default 100)
+  -result-dir string
+        path to folder where analysis results will be written (default "results")
 ```
+
+| Analyzer | Needs | Checks |
+|---|---|---|
+| `pinned` | `git` | Share of `uses:` references pinned to a commit SHA / OCI digest, plus Renovate/Dependabot config |
+| `zizmor` | `zizmor` on `$PATH` | [zizmor](https://github.com/zizmorcore/zizmor) findings for `.github/` |
+| `immutable` | `GITHUB_TOKEN` | Whether the latest release is marked immutable |
+
+Set `GITHUB_TOKEN` for any real run. Without it, search requests are heavily
+rate-limited and may return incomplete results.
+
+### export-pinned / export-zizmor
+
+Convert scan results into the files the website reads:
+
+```sh
+go run . export-pinned --result-dir=results --out=web.json
+go run . export-zizmor --result-dir=results --out=frontend/zizmor-web.js
+```
+
+`export-zizmor` also reads `stars.json`, so run it against the same
+`--result-dir` as the scan.
 
 ## Example
 
 To replicate the results for 10,000 repositories, run:
 
 ```sh
-go run . -max-pages 100
+GITHUB_TOKEN=... go run . scan -max-pages 100 -analyzer pinned,zizmor,immutable
 ```
 
 > [!NOTE]
