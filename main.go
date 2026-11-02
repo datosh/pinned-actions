@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/google/go-github/v85/github"
+	"github.com/google/go-github/v93/github"
 )
 
 const usage = `Usage: pinned-actions <command> [flags]
@@ -47,7 +47,15 @@ func runScan(args []string) {
 	if token == "" {
 		log.Printf("[WARN] GITHUB_TOKEN not set; unauthenticated search requests are heavily rate-limited and may return incomplete results")
 	}
-	client := github.NewClient(nil).WithAuthToken(token)
+	var opts []github.ClientOptionsFunc
+	if token != "" {
+		// WithAuthToken rejects an empty token, so only add it when set.
+		opts = append(opts, github.WithAuthToken(token))
+	}
+	client, err := github.NewClient(opts...)
+	if err != nil {
+		log.Fatalf("creating GitHub client: %v", err)
+	}
 
 	ctx := context.Background()
 
