@@ -41,6 +41,11 @@
       "allowedVersions": "<9000"
     },
     {
+      "description": "Actions are pinned by .github/workflows/actions.lock; keep the version tags in the workflows",
+      "matchManagers": ["github-actions"],
+      "pinDigests": false
+    },
+    {
       "groupName": "GitHub Actions",
       "matchDatasources": ["github-actions"]
     }
