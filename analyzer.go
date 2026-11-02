@@ -39,7 +39,11 @@ var analyzerRegistry = []struct {
 		return a, nil
 	}},
 	{"lockfile", func(_ *github.Client) (Analyzer, error) {
-		return NewLockfileAnalyzer(), nil
+		a, err := NewLockfileAnalyzer()
+		if err != nil {
+			return nil, err
+		}
+		return a, nil
 	}},
 	{"immutable", func(client *github.Client) (Analyzer, error) {
 		return NewImmutableReleasesAnalyzer(client), nil

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -30,9 +32,41 @@ type LockfileResult struct {
 }
 
 // LockfileAnalyzer inspects .github/workflows/actions.lock of each repository.
-type LockfileAnalyzer struct{}
+// It needs the gh CLI with the actions-lock extension installed.
+type LockfileAnalyzer struct {
+	gh string // path of the gh binary
+}
 
-func NewLockfileAnalyzer() *LockfileAnalyzer { return &LockfileAnalyzer{} }
+// minLockfileCLIVersion is the oldest gh-actions-lock we have tested against
+// (see testdata/lockfile).
+var minLockfileCLIVersion = [3]int{0, 4, 1}
+
+// NewLockfileAnalyzer finds gh and checks that `gh actions-lock` is installed
+// and recent enough.
+func NewLockfileAnalyzer() (*LockfileAnalyzer, error) {
+	gh, err := exec.LookPath("gh")
+	if err != nil {
+		return nil, fmt.Errorf("gh not found on $PATH: %w", err)
+	}
+	out, err := exec.Command(gh, "actions-lock", "--version").Output()
+	if err != nil {
+		return nil, fmt.Errorf("gh actions-lock is not available (install it with `gh extension install github/gh-actions-lock`): %w", err)
+	}
+	if err := checkLockfileCLIVersion(string(out)); err != nil {
+		return nil, err
+	}
+	return &LockfileAnalyzer{gh: gh}, nil
+}
+
+// checkLockfileCLIVersion verifies the output of `gh actions-lock --version`
+// (e.g. "actions-lock version v0.4.1") is at least minLockfileCLIVersion.
+func checkLockfileCLIVersion(output string) error {
+	fields := strings.Fields(output)
+	if len(fields) != 3 || fields[1] != "version" {
+		return fmt.Errorf("unexpected gh actions-lock --version output %q", output)
+	}
+	return requireVersion("gh-actions-lock", fields[2], minLockfileCLIVersion)
+}
 
 func (l *LockfileAnalyzer) Name() string { return "lockfile" }
 

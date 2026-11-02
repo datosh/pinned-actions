@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"slices"
-	"strconv"
 	"strings"
 )
 
@@ -62,28 +60,7 @@ func checkZizmorVersion(output string) error {
 	if len(fields) != 2 {
 		return fmt.Errorf("unexpected zizmor --version output %q", output)
 	}
-	// Drop any pre-release or build suffix, e.g. 1.32.0-rc.1.
-	core, _, _ := strings.Cut(fields[1], "-")
-	core, _, _ = strings.Cut(core, "+")
-
-	parts := strings.Split(core, ".")
-	if len(parts) != 3 {
-		return fmt.Errorf("unexpected zizmor version %q", fields[1])
-	}
-	var version [3]int
-	for i, p := range parts {
-		n, err := strconv.Atoi(p)
-		if err != nil {
-			return fmt.Errorf("unexpected zizmor version %q: %w", fields[1], err)
-		}
-		version[i] = n
-	}
-
-	if slices.Compare(version[:], minZizmorVersion[:]) < 0 {
-		return fmt.Errorf("zizmor %s is too old; need at least %d.%d.%d",
-			fields[1], minZizmorVersion[0], minZizmorVersion[1], minZizmorVersion[2])
-	}
-	return nil
+	return requireVersion("zizmor", fields[1], minZizmorVersion)
 }
 
 func (z *ZizmorAnalyzer) Name() string { return "zizmor" }

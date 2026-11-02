@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -43,7 +44,7 @@ func TestLockfileAnalyzerFixtures(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := NewLockfileAnalyzer().Analyze(context.Background(), test.dir, test.repo)
+			got, err := (&LockfileAnalyzer{}).Analyze(context.Background(), test.dir, test.repo)
 			require.NoError(t, err)
 
 			want := test.want
@@ -68,12 +69,58 @@ func TestLockfileAnalyzerCountsOnlyWorkflowFiles(t *testing.T) {
 	lock := "version: 'v0.0.3'\nworkflows:\n  '.github/workflows/a.yml': []\n  '.github/workflows/gone.yml': []\n  '.github/workflows/nested/d.yml': []\n"
 	require.NoError(t, os.WriteFile(filepath.Join(workflows, "actions.lock"), []byte(lock), 0o644))
 
-	got, err := NewLockfileAnalyzer().Analyze(context.Background(), root, "o/r")
+	got, err := (&LockfileAnalyzer{}).Analyze(context.Background(), root, "o/r")
 	require.NoError(t, err)
 
 	assert.Equal(t, LockfileResult{
 		Repository: "o/r", HasLockfile: true, Version: "v0.0.3", WorkflowsTotal: 2, WorkflowsLocked: 1,
 	}, got)
+}
+
+func TestCheckLockfileCLIVersion(t *testing.T) {
+	tests := []struct {
+		output  string
+		wantErr bool
+	}{
+		{output: "actions-lock version v0.4.1\n"},
+		{output: "actions-lock version v0.4.2"},
+		{output: "actions-lock version v0.10.0"},
+		{output: "actions-lock version v1.0.0"},
+		{output: "actions-lock version v0.4.0", wantErr: true},
+		{output: "actions-lock version v0.3.9", wantErr: true},
+		{output: "actions-lock version dev", wantErr: true},
+		{output: "actions-lock v0.4.1", wantErr: true},
+		{output: "v0.4.1", wantErr: true},
+		{output: "", wantErr: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.output, func(t *testing.T) {
+			err := checkLockfileCLIVersion(test.output)
+			if test.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestNewLockfileAnalyzer runs the real CLI; it is skipped unless gh and the
+// actions-lock extension are installed.
+func TestNewLockfileAnalyzer(t *testing.T) {
+	gh, err := exec.LookPath("gh")
+	if err != nil {
+		t.Skip("gh not on $PATH")
+	}
+	if err := exec.Command(gh, "actions-lock", "--version").Run(); err != nil {
+		t.Skip("gh actions-lock not installed")
+	}
+
+	a, err := NewLockfileAnalyzer()
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, a.gh)
 }
 
 func TestParseLockfile(t *testing.T) {
