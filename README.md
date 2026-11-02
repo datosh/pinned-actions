@@ -20,14 +20,14 @@ Commands:
 
 Downloads the most popular repositories (by stars) and runs the selected
 analyzers on each of them. Results are written to `--result-dir`, one file per
-analyzer (`pinned.jsonl`, `zizmor.jsonl`, `immutable.jsonl`), plus `stars.json`. Each
+analyzer (`pinned.jsonl`, `zizmor.jsonl`, `lockfile.jsonl`, `immutable.jsonl`), plus `stars.json`. Each
 repository result is written as soon as it is ready, so an interrupted scan keeps
 its progress; add `-resume` to continue it (see below).
 
 ```sh
 $ go run . scan -h
   -analyzer string
-        comma-separated list of analyzers to run (available: pinned, zizmor, immutable) (default "pinned")
+        comma-separated list of analyzers to run (available: pinned, zizmor, lockfile, immutable) (default "pinned")
   -download-dir string
         path to folder where repositories will be downloaded (default "/tmp/pinned")
   -max-pages int
@@ -44,6 +44,7 @@ $ go run . scan -h
 |---|---|---|
 | `pinned` | `git` | Share of `uses:` references pinned to a commit SHA / OCI digest, plus Renovate/Dependabot config |
 | `zizmor` | `zizmor` on `$PATH` | [zizmor](https://github.com/zizmorcore/zizmor) findings for `.github/` |
+| `lockfile` | - | Whether `.github/workflows/actions.lock` ([workflow lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)) exists, and how many workflows the repository has |
 | `immutable` | `GITHUB_TOKEN` | Whether the latest release is marked immutable |
 
 Set `GITHUB_TOKEN` for any real run. Without it, search requests are heavily

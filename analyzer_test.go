@@ -8,7 +8,7 @@ import (
 )
 
 func TestAnalyzerNames(t *testing.T) {
-	assert.Equal(t, []string{"pinned", "zizmor", "immutable"}, analyzerNames())
+	assert.Equal(t, []string{"pinned", "zizmor", "lockfile", "immutable"}, analyzerNames())
 }
 
 func TestBuildAnalyzers(t *testing.T) {
@@ -30,5 +30,5 @@ func TestBuildAnalyzersUnknown(t *testing.T) {
 	_, err := buildAnalyzers(config, nil)
 
 	assert.ErrorContains(t, err, `unknown analyzer "nope"`)
-	assert.ErrorContains(t, err, "available: pinned, zizmor, immutable")
+	assert.ErrorContains(t, err, "available: pinned, zizmor, lockfile, immutable")
 }
