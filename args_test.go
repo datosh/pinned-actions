@@ -19,6 +19,7 @@ func TestParseScanArgsOverrides(t *testing.T) {
 		"-max-pages=7",
 		"-per-page=50",
 		"-analyzer=pinned,zizmor",
+		"-resume",
 	})
 
 	want := *NewConfig()
@@ -27,5 +28,6 @@ func TestParseScanArgsOverrides(t *testing.T) {
 	want.MaxPages = 7
 	want.PerPage = 50
 	want.Analyzers = []string{"pinned", "zizmor"}
+	want.Resume = true
 	assert.Equal(t, want, got)
 }

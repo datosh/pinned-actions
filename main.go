@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/google/go-github/v93/github"
@@ -87,8 +86,14 @@ func runScan(args []string) {
 		fatal("configuring analyzers", "error", err)
 	}
 
+	store, err := openResults(config.ResultDir, analyzers, config.Resume)
+	if err != nil {
+		fatal("opening results", "error", err)
+	}
+
 	downloader := NewRepositoryDownloader(client, config)
-	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, config.ResultDir, analyzers); err != nil {
+	downloader.skip = store.complete // no need to fetch repos nobody needs
+	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, analyzers, store); err != nil {
 		fatal("scan failed", "error", err)
 	}
 }
@@ -99,23 +104,10 @@ func runScan(args []string) {
 func runPipeline(
 	ctx context.Context,
 	download func(context.Context, chan string) error,
-	downloadDir, resultDir string,
+	downloadDir string,
 	analyzers []Analyzer,
+	store *resultStore,
 ) error {
-	// Each analyzer's per-repository results are appended to its own file as
-	// they arrive, so an interrupted run keeps everything analyzed so far.
-	writers := make([]*jsonlWriter, len(analyzers))
-	for i, a := range analyzers {
-		w, err := newJSONLWriter(filepath.Join(resultDir, a.Name()+".jsonl"))
-		if err != nil {
-			for _, opened := range writers[:i] {
-				_ = opened.Close()
-			}
-			return err
-		}
-		writers[i] = w
-	}
-
 	downloaded := make(chan string)
 	downloadErr := make(chan error, 1)
 
@@ -132,6 +124,9 @@ func runPipeline(
 			continue // keep draining so the downloader can finish
 		}
 		for i, a := range analyzers {
+			if store.has(i, repo) {
+				continue // resumed run: this analyzer already has its result
+			}
 			result, err := a.Analyze(ctx, downloadDir, repo)
 			if err != nil {
 				slog.Error("analysis failed", "analyzer", a.Name(), "repo", repo, "error", err)
@@ -140,17 +135,14 @@ func runPipeline(
 			if result == nil {
 				continue
 			}
-			if err := writers[i].Write(result); err != nil {
+			if err := store.write(i, result); err != nil {
 				slog.Error("saving result failed", "analyzer", a.Name(), "repo", repo, "error", err)
 			}
 		}
 	}
 
-	errs := []error{<-downloadErr}
-	for i, a := range analyzers {
-		if err := writers[i].Close(); err != nil {
-			errs = append(errs, fmt.Errorf("closing results of %s: %w", a.Name(), err))
-		}
+	errs := []error{<-downloadErr, store.Close()}
+	for _, a := range analyzers {
 		if err := a.Close(); err != nil {
 			errs = append(errs, fmt.Errorf("closing analyzer %s: %w", a.Name(), err))
 		}

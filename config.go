@@ -10,6 +10,8 @@ type Config struct {
 	DownloadDir string
 	ResultDir   string
 	Analyzers   []string
+	// Resume keeps existing results in ResultDir and only analyzes what is missing.
+	Resume bool
 }
 
 func NewConfig() *Config {

@@ -20,7 +20,9 @@ Commands:
 
 Downloads the most popular repositories (by stars) and runs the selected
 analyzers on each of them. Results are written to `--result-dir`, one file per
-analyzer (`pinned.jsonl`, `zizmor.jsonl`, `immutable.jsonl`), plus `stars.json`.
+analyzer (`pinned.jsonl`, `zizmor.jsonl`, `immutable.jsonl`), plus `stars.json`. Each
+repository result is written as soon as it is ready, so an interrupted scan keeps
+its progress; add `-resume` to continue it (see below).
 
 ```sh
 $ go run . scan -h
@@ -34,6 +36,8 @@ $ go run . scan -h
         number of repositories to download per page (default 100)
   -result-dir string
         path to folder where analysis results will be written (default "results")
+  -resume
+        continue a previous scan: keep results in --result-dir and only analyze repositories an analyzer has no result for
 ```
 
 | Analyzer | Needs | Checks |
@@ -44,6 +48,12 @@ $ go run . scan -h
 
 Set `GITHUB_TOKEN` for any real run. Without it, search requests are heavily
 rate-limited and may return incomplete results.
+
+Without `-resume`, a scan starts its result files from scratch. With `-resume`,
+existing results in `--result-dir` are kept, each analyzer skips the
+repositories it already has a result for (so you can add an analyzer to an
+earlier run), and repositories that every analyzer is done with are not
+downloaded again. Use the same flags as the interrupted run.
 
 ### export-pinned / export-zizmor
 

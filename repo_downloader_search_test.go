@@ -118,6 +118,24 @@ func TestDownloadTiedStarsAtPageBoundary(t *testing.T) {
 	assert.Len(t, readStars(t, d), len(repos))
 }
 
+func TestDownloadSkipsRepositoriesButKeepsTheirStars(t *testing.T) {
+	repos := []fakeRepo{{"o/a", 5000}, {"o/b", 4000}}
+	var requests atomic.Int32
+	d := newTestDownloader(t, newSearchServer(t, repos, 0, &requests), 10)
+	var cloned []string
+	d.clone = func(_ context.Context, repo *github.Repository) error {
+		cloned = append(cloned, repo.GetFullName())
+		return nil
+	}
+	d.skip = func(name string) bool { return name == "o/a" }
+
+	downloaded := make(chan string, 10)
+	require.NoError(t, d.Download(context.Background(), downloaded))
+
+	assert.Equal(t, []string{"o/b"}, cloned)
+	assert.Equal(t, map[string]int{"o/a": 5000, "o/b": 4000}, readStars(t, d))
+}
+
 func TestDownloadRetriesIncompleteResults(t *testing.T) {
 	repos := []fakeRepo{{"o/a", 5000}}
 	var requests atomic.Int32

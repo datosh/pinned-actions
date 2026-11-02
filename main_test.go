@@ -11,17 +11,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// fakeResult is what fakeAnalyzer produces; like real results it has a repository.
+type fakeResult struct {
+	Repository string `json:"repository"`
+}
+
 type fakeAnalyzer struct {
+	name     string
 	analyzed []string
 	closed   int
 	closeErr error
 }
 
-func (f *fakeAnalyzer) Name() string { return "fake" }
+func (f *fakeAnalyzer) Name() string {
+	if f.name != "" {
+		return f.name
+	}
+	return "fake"
+}
 
 func (f *fakeAnalyzer) Analyze(_ context.Context, _, repo string) (any, error) {
 	f.analyzed = append(f.analyzed, repo)
-	return repo, nil
+	return fakeResult{Repository: repo}, nil
 }
 
 func (f *fakeAnalyzer) Close() error {
@@ -75,7 +86,9 @@ func TestRunPipeline(t *testing.T) {
 			a := &fakeAnalyzer{closeErr: test.closeErr}
 
 			resultDir := t.TempDir()
-			err := runPipeline(context.Background(), download, "/unused", resultDir, []Analyzer{a})
+			store, storeErr := openResults(resultDir, []Analyzer{a}, false)
+			require.NoError(t, storeErr)
+			err := runPipeline(context.Background(), download, "/unused", []Analyzer{a}, store)
 
 			if len(test.wantErrs) == 0 {
 				require.NoError(t, err)
@@ -87,9 +100,13 @@ func TestRunPipeline(t *testing.T) {
 			assert.Equal(t, 1, a.closed)
 
 			// Results were saved one line per repository, even on failure.
-			saved, readErr := readJSONL[string](filepath.Join(resultDir, "fake.jsonl"))
+			saved, readErr := readJSONL[fakeResult](filepath.Join(resultDir, "fake.jsonl"))
 			require.NoError(t, readErr)
-			assert.Equal(t, test.wantAnalyzed, saved)
+			var savedRepos []string
+			for _, s := range saved {
+				savedRepos = append(savedRepos, s.Repository)
+			}
+			assert.Equal(t, test.wantAnalyzed, savedRepos)
 		})
 	}
 }
@@ -106,7 +123,9 @@ func TestRunPipelineCancelledStillFlushes(t *testing.T) {
 	}
 	a := &fakeAnalyzer{}
 
-	err := runPipeline(ctx, download, "/unused", t.TempDir(), []Analyzer{a})
+	store, storeErr := openResults(t.TempDir(), []Analyzer{a}, false)
+	require.NoError(t, storeErr)
+	err := runPipeline(ctx, download, "/unused", []Analyzer{a}, store)
 
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.NotContains(t, a.analyzed, "b/two", "repos arriving after cancellation are not analyzed")

@@ -15,6 +15,7 @@ func ParseScanArgs(args []string) Config {
 	fs.IntVar(&config.MaxPages, "max-pages", config.MaxPages, "maximum number of pages to download")
 	fs.IntVar(&config.PerPage, "per-page", config.PerPage, "number of repositories to download per page")
 
+	fs.BoolVar(&config.Resume, "resume", config.Resume, "continue a previous scan: keep results in --result-dir and only analyze repositories an analyzer has no result for")
 	analyzerFlag := fs.String("analyzer", strings.Join(config.Analyzers, ","), "comma-separated list of analyzers to run (available: "+strings.Join(analyzerNames(), ", ")+")")
 
 	if err := fs.Parse(args); err != nil {

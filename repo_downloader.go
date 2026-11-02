@@ -32,6 +32,9 @@ type RepositoryDownloader struct {
 	config Config
 	// clone fetches one repository; replaced in tests.
 	clone func(context.Context, *github.Repository) error
+	// skip reports repositories that need no download, e.g. because all
+	// results for them exist already. Their stars are still recorded.
+	skip func(fullName string) bool
 	// retryDelay is the first wait before retrying incomplete results; it
 	// doubles with every further retry.
 	retryDelay time.Duration
@@ -42,6 +45,7 @@ func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDo
 		client:     client,
 		config:     config,
 		retryDelay: 2 * time.Second,
+		skip:       func(string) bool { return false },
 	}
 	r.clone = r.downloadRepository
 	return r
@@ -112,6 +116,9 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			}
 			newRepos++
 			stars[name] = lastStars
+			if r.skip(name) {
+				continue
+			}
 			if err := r.clone(ctx, repository); err != nil {
 				slog.Error("downloading repository failed", "repo", name, "error", err)
 				continue
