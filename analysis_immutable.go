@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v93/github"
@@ -22,29 +21,21 @@ type ImmutableResult struct {
 // repository is marked immutable. It requires a GitHub API token for
 // reasonable rate limits (one API call per repository).
 type ImmutableReleasesAnalyzer struct {
-	client    *github.Client
-	resultDir string
-	results   []ImmutableResult
+	client *github.Client
 }
 
-func NewImmutableReleasesAnalyzer(client *github.Client, resultDir string) *ImmutableReleasesAnalyzer {
-	return &ImmutableReleasesAnalyzer{client: client, resultDir: resultDir}
+func NewImmutableReleasesAnalyzer(client *github.Client) *ImmutableReleasesAnalyzer {
+	return &ImmutableReleasesAnalyzer{client: client}
 }
 
 func (im *ImmutableReleasesAnalyzer) Name() string { return "immutable" }
 
-// Analyze collects results itself and writes them in Close (not yet ported to
-// per-repository results).
 func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string) (any, error) {
-	return nil, im.analyze(ctx, repo)
-}
-
-func (im *ImmutableReleasesAnalyzer) analyze(ctx context.Context, repo string) error {
 	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	parts := strings.SplitN(repo, "/", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("unexpected repo format %q (want owner/name)", repo)
+		return nil, fmt.Errorf("unexpected repo format %q (want owner/name)", repo)
 	}
 	owner, name := parts[0], parts[1]
 
@@ -53,20 +44,16 @@ func (im *ImmutableReleasesAnalyzer) analyze(ctx context.Context, repo string) e
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
 			// No releases published — not using immutable releases.
-			im.results = append(im.results, ImmutableResult{Repository: repo})
-			return nil
+			return ImmutableResult{Repository: repo}, nil
 		}
-		return fmt.Errorf("fetching latest release for %s: %w", repo, err)
+		return nil, fmt.Errorf("fetching latest release for %s: %w", repo, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	im.results = append(im.results, ImmutableResult{
+	return ImmutableResult{
 		Repository:             repo,
 		LatestReleaseImmutable: release.GetImmutable(),
-	})
-	return nil
+	}, nil
 }
 
-func (im *ImmutableReleasesAnalyzer) Close() error {
-	return writeJSON(filepath.Join(im.resultDir, "immutable.json"), im.results)
-}
+func (im *ImmutableReleasesAnalyzer) Close() error { return nil }

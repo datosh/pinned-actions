@@ -34,15 +34,13 @@ type ZizmorResult struct {
 // repository. It requires the zizmor binary to be present on $PATH.
 type ZizmorAnalyzer struct {
 	zizmorBin string
-	resultDir string
-	results   []ZizmorResult
 }
 
 // minZizmorVersion is the oldest zizmor whose JSON output parseZizmorOutput
 // understands (see testdata/zizmor).
 var minZizmorVersion = [3]int{1, 31, 1}
 
-func NewZizmorAnalyzer(resultDir string) (*ZizmorAnalyzer, error) {
+func NewZizmorAnalyzer() (*ZizmorAnalyzer, error) {
 	bin, err := exec.LookPath("zizmor")
 	if err != nil {
 		return nil, fmt.Errorf("zizmor not found on $PATH: %w", err)
@@ -54,7 +52,7 @@ func NewZizmorAnalyzer(resultDir string) (*ZizmorAnalyzer, error) {
 	if err := checkZizmorVersion(string(out)); err != nil {
 		return nil, err
 	}
-	return &ZizmorAnalyzer{zizmorBin: bin, resultDir: resultDir}, nil
+	return &ZizmorAnalyzer{zizmorBin: bin}, nil
 }
 
 // checkZizmorVersion verifies the output of `zizmor --version`
@@ -90,21 +88,16 @@ func checkZizmorVersion(output string) error {
 
 func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
 
-// Analyze collects results itself and writes them in Close (not yet ported to
-// per-repository results).
 func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) (any, error) {
-	return nil, z.analyze(ctx, repoPath, repo)
-}
+	noGHA := ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}}
 
-func (z *ZizmorAnalyzer) analyze(ctx context.Context, repoPath, repo string) error {
 	githubDir := filepath.Join(repoPath, repo, ".github")
 	hasGithubDir, err := exists(githubDir)
 	if err != nil {
-		return fmt.Errorf("checking %s: %w", githubDir, err)
+		return nil, fmt.Errorf("checking %s: %w", githubDir, err)
 	}
 	if !hasGithubDir {
-		z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
-		return nil
+		return noGHA, nil
 	}
 
 	var stdout bytes.Buffer
@@ -125,28 +118,20 @@ func (z *ZizmorAnalyzer) analyze(ctx context.Context, repoPath, repo string) err
 		// workflows or actions). The repo does not use GHA in a meaningful way.
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
-			z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
-			return nil
+			return noGHA, nil
 		}
-		return fmt.Errorf("running zizmor: %w", err)
+		return nil, fmt.Errorf("running zizmor: %w", err)
 	}
 
 	findings, err := parseZizmorOutput(stdout.Bytes(), repoPath, repo)
 	if err != nil {
-		return fmt.Errorf("parsing zizmor output: %w", err)
+		return nil, fmt.Errorf("parsing zizmor output: %w", err)
 	}
 
-	z.results = append(z.results, ZizmorResult{
-		Repository: repo,
-		UsesGHA:    true,
-		Findings:   findings,
-	})
-	return nil
+	return ZizmorResult{Repository: repo, UsesGHA: true, Findings: findings}, nil
 }
 
-func (z *ZizmorAnalyzer) Close() error {
-	return writeJSON(filepath.Join(z.resultDir, "zizmor.json"), z.results)
-}
+func (z *ZizmorAnalyzer) Close() error { return nil }
 
 // zizmorRawFinding mirrors the relevant subset of zizmor's JSON output.
 type zizmorRawFinding struct {

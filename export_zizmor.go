@@ -25,7 +25,7 @@ type ZizmorWebResult struct {
 }
 
 // runExportZizmor implements the "export-zizmor" subcommand. It reads
-// zizmor.json from the result directory, aggregates findings into per-rule
+// zizmor.jsonl from the result directory, aggregates findings into per-rule
 // counts (dropping file and line), and writes the slimmed output.
 //
 // Usage:
@@ -39,8 +39,8 @@ func runExportZizmor(args []string) {
 		fatal("export failed", "error", err)
 	}
 
-	var raw []ZizmorResult
-	if err := readJSON(filepath.Join(a.ResultDir, "zizmor.json"), &raw); err != nil {
+	raw, err := readJSONL[ZizmorResult](filepath.Join(a.ResultDir, "zizmor.jsonl"))
+	if err != nil {
 		fatal("export failed", "error", err)
 	}
 

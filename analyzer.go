@@ -14,9 +14,8 @@ import (
 //
 // Analyze is called once per repository and returns that repository's result,
 // which the runner appends as one line to <result-dir>/<Name()>.jsonl. A nil
-// result is not written (analyzers not yet ported still write their own file
-// in Close). Close is called exactly once after all repositories have been
-// processed.
+// result is not written. Close is called exactly once after all repositories
+// have been processed.
 type Analyzer interface {
 	Name() string
 	Analyze(ctx context.Context, repoPath, repo string) (any, error)
@@ -27,20 +26,20 @@ type Analyzer interface {
 // one, append an entry here.
 var analyzerRegistry = []struct {
 	name  string
-	build func(config Config, client *github.Client) (Analyzer, error)
+	build func(client *github.Client) (Analyzer, error)
 }{
-	{"pinned", func(config Config, _ *github.Client) (Analyzer, error) {
+	{"pinned", func(_ *github.Client) (Analyzer, error) {
 		return NewPinnedAnalyzer(), nil
 	}},
-	{"zizmor", func(config Config, _ *github.Client) (Analyzer, error) {
-		a, err := NewZizmorAnalyzer(config.ResultDir)
+	{"zizmor", func(_ *github.Client) (Analyzer, error) {
+		a, err := NewZizmorAnalyzer()
 		if err != nil {
 			return nil, err
 		}
 		return a, nil
 	}},
-	{"immutable", func(config Config, client *github.Client) (Analyzer, error) {
-		return NewImmutableReleasesAnalyzer(client, config.ResultDir), nil
+	{"immutable", func(client *github.Client) (Analyzer, error) {
+		return NewImmutableReleasesAnalyzer(client), nil
 	}},
 }
 
@@ -62,7 +61,7 @@ func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {
 			if entry.name != name {
 				continue
 			}
-			a, err := entry.build(config, client)
+			a, err := entry.build(client)
 			if err != nil {
 				return nil, err
 			}

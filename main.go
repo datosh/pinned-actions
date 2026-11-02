@@ -18,7 +18,7 @@ const usage = `Usage: pinned-actions <command> [flags]
 Commands:
   scan           Download repositories and run analyzers
   export-pinned  Export pinned.jsonl to the format expected by the frontend
-  export-zizmor  Export zizmor.json to a slimmed per-rule-count format for the frontend
+  export-zizmor  Export zizmor.jsonl to a slimmed per-rule-count format for the frontend
 
 Run 'pinned-actions <command> -h' for command-specific flags.
 `

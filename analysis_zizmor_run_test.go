@@ -29,13 +29,14 @@ func TestZizmorAnalyzer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			a, err := NewZizmorAnalyzer(t.TempDir())
+			a, err := NewZizmorAnalyzer()
 			require.NoError(t, err)
 
-			require.NoError(t, a.analyze(context.Background(), "testdata", test.repo))
+			result, err := a.Analyze(context.Background(), "testdata", test.repo)
+			require.NoError(t, err)
 
-			require.Len(t, a.results, 1)
-			got := a.results[0]
+			got, ok := result.(ZizmorResult)
+			require.True(t, ok)
 			assert.Equal(t, test.wantUsesGHA, got.UsesGHA)
 			assert.Len(t, got.Findings, test.wantFindings)
 		})
