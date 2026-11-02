@@ -15,7 +15,7 @@ func ParseScanArgs(args []string) Config {
 	fs.IntVar(&config.MaxPages, "max-pages", 1, "maximum number of pages to download")
 	fs.IntVar(&config.PerPage, "per-page", 100, "number of repositories to download per page")
 
-	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: pinned, zizmor, immutable)")
+	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: "+strings.Join(analyzerNames(), ", ")+")")
 
 	if err := fs.Parse(args); err != nil {
 		fs.PrintDefaults()

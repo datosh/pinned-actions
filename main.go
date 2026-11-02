@@ -125,24 +125,3 @@ func runPipeline(
 	}
 	return errors.Join(errs...)
 }
-
-func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {
-	var analyzers []Analyzer
-	for _, name := range config.Analyzers {
-		switch name {
-		case "pinned":
-			analyzers = append(analyzers, NewPinnedAnalyzer(config.ResultDir))
-		case "zizmor":
-			a, err := NewZizmorAnalyzer(config.ResultDir)
-			if err != nil {
-				return nil, err
-			}
-			analyzers = append(analyzers, a)
-		case "immutable":
-			analyzers = append(analyzers, NewImmutableReleasesAnalyzer(client, config.ResultDir))
-		default:
-			return nil, fmt.Errorf("unknown analyzer %q (available: pinned, zizmor, immutable)", name)
-		}
-	}
-	return analyzers, nil
-}
