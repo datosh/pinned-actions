@@ -23,7 +23,7 @@ func TestBucketPinned(t *testing.T) {
 
 	got := bucketPinned(results)
 
-	assert.Equal(t, PinnedBuckets{Pinned: 2, PartiallyPinned: 1, Unpinned: 3}, got)
+	assert.Equal(t, PinnedBuckets{Pinned: 2, PartiallyPinned: 1, Unpinned: 3, NoActions: 1}, got)
 	assert.Equal(t, PinnedBuckets{}, bucketPinned(nil))
 }
 
@@ -53,6 +53,19 @@ func TestSetYear(t *testing.T) {
     }
 }
 `, string(got))
+}
+
+func TestSetYearWritesNewFieldsOnlyWhenSet(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pinned.json")
+	require.NoError(t, setYear(path, "2025", PinnedBuckets{Pinned: 1}))
+	require.NoError(t, setYear(path, "2026", PinnedBuckets{Pinned: 2, NoActions: 3, Scanned: "2026-11-02"}))
+
+	got, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+		"2025": {"pinned": 1, "partially-pinned": 0, "unpinned": 0},
+		"2026": {"pinned": 2, "partially-pinned": 0, "unpinned": 0, "no-actions": 3, "scanned": "2026-11-02"}
+	}`, string(got))
 }
 
 func TestSetYearRejectsInvalidFile(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 // exportArgs are the flags shared by all export subcommands.
@@ -37,19 +38,23 @@ func parseExportArgs(name, defaultOut string, args []string, extra ...func(*flag
 }
 
 // PinnedBuckets counts the repositories that use actions by how many of those
-// actions are pinned. Repositories without any action are not counted.
+// actions are pinned, plus the ones that use none. NoActions and Scanned are
+// missing for years recorded before they existed.
 type PinnedBuckets struct {
-	Pinned          int `json:"pinned"`
-	PartiallyPinned int `json:"partially-pinned"`
-	Unpinned        int `json:"unpinned"`
+	Pinned          int    `json:"pinned"`
+	PartiallyPinned int    `json:"partially-pinned"`
+	Unpinned        int    `json:"unpinned"`
+	NoActions       int    `json:"no-actions,omitempty"`
+	Scanned         string `json:"scanned,omitempty"` // YYYY-MM-DD
 }
 
-// bucketPinned sorts repositories into the three disjoint buckets.
+// bucketPinned sorts repositories into the disjoint buckets.
 func bucketPinned(results []Analysis) PinnedBuckets {
 	var b PinnedBuckets
 	for _, r := range results {
 		switch {
 		case r.ActionsTotal == 0:
+			b.NoActions++
 		case r.ActionsPinned == r.ActionsTotal:
 			b.Pinned++
 		case r.ActionsPinned > 0:
@@ -86,21 +91,34 @@ func setYear(path, year string, buckets PinnedBuckets) error {
 //
 //	pinned-actions export-pinned --result-dir=results/ --year=2026
 func runExportPinned(args []string) {
-	var year, raw string
+	var year, raw, scanned string
 	a := parseExportArgs("export-pinned", "frontend/pinned.json", args, func(flags *flag.FlagSet) {
 		flags.StringVar(&year, "year", "", "year to create or replace in the output file (required)")
 		flags.StringVar(&raw, "raw", "", "also write all per-repository results to this file as a JSON array")
+		flags.StringVar(&scanned, "scanned", "", "date of the scan, YYYY-MM-DD (default: last modification of pinned.jsonl)")
 	})
 	if _, err := strconv.Atoi(year); err != nil || len(year) != 4 {
 		fatal("-year must be a four-digit year", "year", year)
 	}
 
-	results, err := readJSONL[Analysis](filepath.Join(a.ResultDir, "pinned.jsonl"))
+	in := filepath.Join(a.ResultDir, "pinned.jsonl")
+	if scanned == "" {
+		info, err := os.Stat(in)
+		if err != nil {
+			fatal("export failed", "error", err)
+		}
+		scanned = info.ModTime().UTC().Format(time.DateOnly)
+	} else if _, err := time.Parse(time.DateOnly, scanned); err != nil {
+		fatal("-scanned must be a date like 2026-04-28", "scanned", scanned)
+	}
+
+	results, err := readJSONL[Analysis](in)
 	if err != nil {
 		fatal("export failed", "error", err)
 	}
 
 	buckets := bucketPinned(results)
+	buckets.Scanned = scanned
 	if err := setYear(a.Out, year, buckets); err != nil {
 		fatal("export failed", "error", err)
 	}

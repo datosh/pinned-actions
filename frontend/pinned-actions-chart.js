@@ -40,6 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Fills the numbers in the text from the newest year. The HTML keeps the
+    // last hand-written values, which stay when the data lacks a field.
+    function updateSummary(latest) {
+        const using = latest.pinned + latest['partially-pinned'] + latest.unpinned;
+        document.getElementById('fullyPinnedPercent').textContent = Math.round(latest.pinned / using * 100);
+
+        if (latest.scanned) {
+            document.getElementById('lastUpdated').textContent = new Date(latest.scanned + 'T00:00:00Z')
+                .toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        }
+        if (latest['no-actions']) {
+            const all = using + latest['no-actions'];
+            document.getElementById('noActionsPercent').textContent = Math.round(latest['no-actions'] / all * 100);
+        }
+    }
+
     // The years on the slider are whatever pinned.json contains, oldest first.
     fetch('pinned.json')
         .then(response => response.json())
@@ -57,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedYearLabel.textContent = year;
                 renderChart(data[year]);
             };
+            updateSummary(data[years[years.length - 1]]);
             show(years[slider.value]);
             slider.addEventListener('input', () => show(years[slider.value]));
         })
