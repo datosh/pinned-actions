@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/stacklok/frizbee/pkg/interfaces"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	fzconfig "github.com/stacklok/frizbee/pkg/utils/config"
 )
@@ -60,17 +61,14 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 	analysis := Analysis{Repository: repo}
 
 	repoPath := filepath.Join(dir, repo)
-	workflowsPath := filepath.Join(repoPath, ".github", "workflows")
 
-	// A repository without workflows simply uses no actions.
-	hasWorkflows, err := exists(workflowsPath)
+	// Workflows and composite actions both reference other actions via `uses:`.
+	err := countActions([]string{
+		filepath.Join(repoPath, ".github", "workflows"),
+		filepath.Join(repoPath, ".github", "actions"),
+	}, &analysis)
 	if err != nil {
-		return analysis, fmt.Errorf("checking %s: %w", workflowsPath, err)
-	}
-	if hasWorkflows {
-		if err := countActions(workflowsPath, &analysis); err != nil {
-			return analysis, err
-		}
+		return analysis, err
 	}
 
 	// https://docs.renovatebot.com/configuration-options/
@@ -105,16 +103,37 @@ func analyseRepository(dir string, repo string) (Analysis, error) {
 	return analysis, nil
 }
 
-// countActions adds the actions referenced below workflowsPath to analysis.
-func countActions(workflowsPath string, analysis *Analysis) error {
+// countActions adds the distinct actions referenced below dirs to analysis.
+// Missing directories are skipped: a repository without them uses no actions.
+func countActions(dirs []string, analysis *Analysis) error {
 	r := replacer.NewGitHubActionsReplacer(&fzconfig.Config{})
 
-	actions, err := r.ListPath(workflowsPath)
-	if err != nil {
-		return fmt.Errorf("listing actions: %w", err)
+	// frizbee de-duplicates references per call; do the same across dirs so a
+	// reference used in both a workflow and a composite action counts once.
+	seen := make(map[string]bool)
+	var entities []interfaces.EntityRef
+	for _, dir := range dirs {
+		found, err := exists(dir)
+		if err != nil {
+			return fmt.Errorf("checking %s: %w", dir, err)
+		}
+		if !found {
+			continue
+		}
+		listed, err := r.ListPath(dir)
+		if err != nil {
+			return fmt.Errorf("listing actions in %s: %w", dir, err)
+		}
+		for _, e := range listed.Entities {
+			key := e.Type + "|" + e.Name + "@" + e.Ref
+			if !seen[key] {
+				seen[key] = true
+				entities = append(entities, e)
+			}
+		}
 	}
 
-	for _, action := range actions.Entities {
+	for _, action := range entities {
 		switch action.Type {
 		case "container":
 			if len(action.Ref) == 71 && strings.HasPrefix(action.Ref, "sha256:") {

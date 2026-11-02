@@ -82,6 +82,18 @@ func TestPinnedAnalyzer(t *testing.T) {
 			wantHasDependabot: true,
 		},
 		{
+			name:       "Composite action only",
+			repo:       "composite",
+			wantPinned: 1,
+			wantTotal:  2,
+		},
+		{
+			name:       "Same reference in workflow and composite action counts once",
+			repo:       "composite-dedup",
+			wantPinned: 1,
+			wantTotal:  1,
+		},
+		{
 			name:       "No .github directory",
 			repo:       "no-github",
 			wantPinned: 0,
