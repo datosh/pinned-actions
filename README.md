@@ -12,7 +12,7 @@ Usage: pinned-actions <command> [flags]
 
 Commands:
   scan           Download repositories and run analyzers
-  export-pinned  Export pinned.jsonl to the format expected by the frontend
+  export-pinned  Add the pinned-action counts of a scan to the frontend's pinned.json
   export-zizmor  Export zizmor.jsonl to a slimmed per-rule-count format for the frontend
 ```
 
@@ -60,9 +60,15 @@ downloaded again. Use the same flags as the interrupted run.
 Convert scan results into the files the website reads:
 
 ```sh
-go run . export-pinned --result-dir=results --out=web.json
+go run . export-pinned --result-dir=results --year=2026
 go run . export-zizmor --result-dir=results --out=frontend/zizmor-web.js
 ```
+
+`export-pinned` counts the repositories that use actions as fully pinned,
+partially pinned or unpinned (repositories without actions are left out) and
+stores the counts under `--year` in `frontend/pinned.json`, keeping the other
+years. `--raw=FILE` additionally writes all per-repository results as one JSON
+array, e.g. for the downloadable data archive.
 
 `export-zizmor` also reads `stars.json`, so run it against the same
 `--result-dir` as the scan.
