@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -37,12 +39,54 @@ type ZizmorAnalyzer struct {
 	results   []ZizmorResult
 }
 
+// minZizmorVersion is the oldest zizmor whose JSON output parseZizmorOutput
+// understands (see testdata/zizmor).
+var minZizmorVersion = [3]int{1, 31, 1}
+
 func NewZizmorAnalyzer(resultDir string) (*ZizmorAnalyzer, error) {
 	bin, err := exec.LookPath("zizmor")
 	if err != nil {
 		return nil, fmt.Errorf("zizmor not found on $PATH: %w", err)
 	}
+	out, err := exec.Command(bin, "--version").Output()
+	if err != nil {
+		return nil, fmt.Errorf("running zizmor --version: %w", err)
+	}
+	if err := checkZizmorVersion(string(out)); err != nil {
+		return nil, err
+	}
 	return &ZizmorAnalyzer{zizmorBin: bin, resultDir: resultDir}, nil
+}
+
+// checkZizmorVersion verifies the output of `zizmor --version`
+// (e.g. "zizmor 1.31.1") is at least minZizmorVersion.
+func checkZizmorVersion(output string) error {
+	fields := strings.Fields(output)
+	if len(fields) != 2 {
+		return fmt.Errorf("unexpected zizmor --version output %q", output)
+	}
+	// Drop any pre-release or build suffix, e.g. 1.32.0-rc.1.
+	core, _, _ := strings.Cut(fields[1], "-")
+	core, _, _ = strings.Cut(core, "+")
+
+	parts := strings.Split(core, ".")
+	if len(parts) != 3 {
+		return fmt.Errorf("unexpected zizmor version %q", fields[1])
+	}
+	var version [3]int
+	for i, p := range parts {
+		n, err := strconv.Atoi(p)
+		if err != nil {
+			return fmt.Errorf("unexpected zizmor version %q: %w", fields[1], err)
+		}
+		version[i] = n
+	}
+
+	if slices.Compare(version[:], minZizmorVersion[:]) < 0 {
+		return fmt.Errorf("zizmor %s is too old; need at least %d.%d.%d",
+			fields[1], minZizmorVersion[0], minZizmorVersion[1], minZizmorVersion[2])
+	}
+	return nil
 }
 
 func (z *ZizmorAnalyzer) Name() string { return "zizmor" }
@@ -63,14 +107,17 @@ func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) err
 		"--format=json",
 		"--offline",
 		"--no-exit-codes",
+		// Only workflows and actions: a .github/ with just a dependabot.yml
+		// must not count as using GitHub Actions.
+		"--collect=workflows,actions",
 		githubDir,
 	)
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err != nil {
 		// Exit code 3 means zizmor found no auditable inputs (e.g. .github/
-		// exists but contains only issue templates, not workflows or actions).
-		// The repo does not use GHA in a meaningful way.
+		// exists but contains only issue templates or a dependabot.yml, not
+		// workflows or actions). The repo does not use GHA in a meaningful way.
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
 			z.results = append(z.results, ZizmorResult{Repository: repo, UsesGHA: false, Findings: []ZizmorFinding{}})
@@ -116,9 +163,11 @@ type zizmorRawFinding struct {
 		Symbolic struct {
 			Key struct {
 				Local *struct {
-					GivenPath string `json:"given_path"`
+					VerbatimPath string `json:"verbatim_path"`
 				} `json:"Local"`
 			} `json:"key"`
+			// Primary for the offending location, else e.g. Hidden or Related.
+			Kind string `json:"kind"`
 		} `json:"symbolic"`
 		Concrete struct {
 			Location struct {
@@ -144,13 +193,26 @@ func parseZizmorOutput(data []byte, repoPath, repo string) ([]ZizmorFinding, err
 			Severity:   r.Determinations.Severity,
 			Confidence: r.Determinations.Confidence,
 		}
-		// Use the first location that has a concrete file path.
-		for _, loc := range r.Locations {
-			if loc.Symbolic.Key.Local != nil {
-				f.File = strings.TrimPrefix(loc.Symbolic.Key.Local.GivenPath, absRepoPath+"/")
-				f.Line = loc.Concrete.Location.StartPoint.Row
+		// Prefer the primary location; the first one is often just context,
+		// such as the whole step. Fall back to any local file location.
+		best := -1
+		for i, loc := range r.Locations {
+			if loc.Symbolic.Key.Local == nil {
+				continue
+			}
+			if loc.Symbolic.Kind == "Primary" {
+				best = i
 				break
 			}
+			if best == -1 {
+				best = i
+			}
+		}
+		if best >= 0 {
+			loc := r.Locations[best]
+			f.File = strings.TrimPrefix(loc.Symbolic.Key.Local.VerbatimPath, absRepoPath+"/")
+			// zizmor rows are 0-based; editors and GitHub count from 1.
+			f.Line = loc.Concrete.Location.StartPoint.Row + 1
 		}
 		findings = append(findings, f)
 	}
