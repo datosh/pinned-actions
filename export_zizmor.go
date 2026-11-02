@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -34,34 +33,16 @@ type ZizmorWebResult struct {
 //
 //	pinned-actions export-zizmor --result-dir=results/ --out=zizmor-web.js
 func runExportZizmor(args []string) {
-	fs := flag.NewFlagSet("export-zizmor", flag.ExitOnError)
-	resultDir := fs.String("result-dir", "results", "directory containing analysis results")
-	out := fs.String("out", "zizmor-web.js", "output file for the frontend")
+	a := parseExportArgs("export-zizmor", "zizmor-web.js", args)
 
-	if err := fs.Parse(args); err != nil {
-		fs.PrintDefaults()
-		os.Exit(1)
-	}
-
-	starsIn := filepath.Join(*resultDir, "stars.json")
-	starsData, err := os.ReadFile(starsIn)
-	if err != nil {
-		log.Fatalf("reading %s: %v", starsIn, err)
-	}
 	var stars map[string]int
-	if err := json.Unmarshal(starsData, &stars); err != nil {
-		log.Fatalf("parsing %s: %v", starsIn, err)
-	}
-
-	in := filepath.Join(*resultDir, "zizmor.json")
-	data, err := os.ReadFile(in)
-	if err != nil {
-		log.Fatalf("reading %s: %v", in, err)
+	if err := readJSON(filepath.Join(a.ResultDir, "stars.json"), &stars); err != nil {
+		log.Fatal(err)
 	}
 
 	var raw []ZizmorResult
-	if err := json.Unmarshal(data, &raw); err != nil {
-		log.Fatalf("parsing %s: %v", in, err)
+	if err := readJSON(filepath.Join(a.ResultDir, "zizmor.json"), &raw); err != nil {
+		log.Fatal(err)
 	}
 
 	web := make([]ZizmorWebResult, 0, len(raw))
@@ -79,23 +60,17 @@ func runExportZizmor(args []string) {
 		log.Fatalf("marshalling data: %v", err)
 	}
 
-	f, err := os.Create(*out)
-	if err != nil {
-		log.Fatalf("creating %s: %v", *out, err)
-	}
-	if _, err := fmt.Fprintf(f, "const ZIZMOR_DATA = %s;\n", jsonData); err != nil {
-		_ = f.Close()
-		log.Fatalf("writing %s: %v", *out, err)
-	}
-	if err := f.Close(); err != nil {
-		log.Fatalf("closing %s: %v", *out, err)
+	// The frontend loads this as a script, so it is JS rather than plain JSON.
+	script := fmt.Sprintf("const ZIZMOR_DATA = %s;\n", jsonData)
+	if err := os.WriteFile(a.Out, []byte(script), 0o644); err != nil {
+		log.Fatalf("writing %s: %v", a.Out, err)
 	}
 
 	total := 0
 	for _, r := range web {
 		total += len(r.Rules)
 	}
-	fmt.Printf("Exported %d repositories (%d unique rule entries) to %s\n", len(web), total, *out)
+	fmt.Printf("Exported %d repositories (%d unique rule entries) to %s\n", len(web), total, a.Out)
 }
 
 // aggregateRules collapses a flat list of findings into per-(rule,severity)

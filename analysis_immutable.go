@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -64,14 +62,5 @@ func (im *ImmutableReleasesAnalyzer) Analyze(ctx context.Context, _, repo string
 }
 
 func (im *ImmutableReleasesAnalyzer) Close() error {
-	out := filepath.Join(im.resultDir, "immutable.json")
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("creating %s: %w", out, err)
-	}
-	if err := json.NewEncoder(f).Encode(im.results); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("encoding %s: %w", out, err)
-	}
-	return f.Close()
+	return writeJSON(filepath.Join(im.resultDir, "immutable.json"), im.results)
 }

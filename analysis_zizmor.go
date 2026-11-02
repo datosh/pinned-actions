@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -140,16 +139,7 @@ func (z *ZizmorAnalyzer) Analyze(ctx context.Context, repoPath, repo string) err
 }
 
 func (z *ZizmorAnalyzer) Close() error {
-	out := filepath.Join(z.resultDir, "zizmor.json")
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("creating %s: %w", out, err)
-	}
-	if err := json.NewEncoder(f).Encode(z.results); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("encoding %s: %w", out, err)
-	}
-	return f.Close()
+	return writeJSON(filepath.Join(z.resultDir, "zizmor.json"), z.results)
 }
 
 // zizmorRawFinding mirrors the relevant subset of zizmor's JSON output.

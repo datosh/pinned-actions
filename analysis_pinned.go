@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -45,16 +43,7 @@ func (p *PinnedAnalyzer) Analyze(_ context.Context, repoPath, repo string) error
 }
 
 func (p *PinnedAnalyzer) Close() error {
-	out := filepath.Join(p.resultDir, "pinned.json")
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("creating %s: %w", out, err)
-	}
-	if err := json.NewEncoder(f).Encode(p.results); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("encoding %s: %w", out, err)
-	}
-	return f.Close()
+	return writeJSON(filepath.Join(p.resultDir, "pinned.json"), p.results)
 }
 
 func analyseRepository(dir string, repo string) (Analysis, error) {

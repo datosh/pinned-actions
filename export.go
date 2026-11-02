@@ -1,13 +1,33 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 )
+
+// exportArgs are the flags shared by all export subcommands.
+type exportArgs struct {
+	ResultDir string
+	Out       string
+}
+
+// parseExportArgs parses the --result-dir and --out flags of an export
+// subcommand; defaultOut is the default output file.
+func parseExportArgs(name, defaultOut string, args []string) exportArgs {
+	var a exportArgs
+	fs := flag.NewFlagSet(name, flag.ExitOnError)
+	fs.StringVar(&a.ResultDir, "result-dir", "results", "directory containing analysis results")
+	fs.StringVar(&a.Out, "out", defaultOut, "output file for the frontend")
+
+	if err := fs.Parse(args); err != nil {
+		fs.PrintDefaults()
+		os.Exit(1)
+	}
+	return a
+}
 
 // runExportPinned implements the "export-pinned" subcommand. It reads
 // pinned.json from the result directory and writes it to a specified output
@@ -17,38 +37,17 @@ import (
 //
 //	pinned-actions export-pinned --result-dir=results/ --out=web.json
 func runExportPinned(args []string) {
-	fs := flag.NewFlagSet("export-pinned", flag.ExitOnError)
-	resultDir := fs.String("result-dir", "results", "directory containing analysis results")
-	out := fs.String("out", "web.json", "output file for the frontend")
+	a := parseExportArgs("export-pinned", "web.json", args)
 
-	if err := fs.Parse(args); err != nil {
-		fs.PrintDefaults()
-		os.Exit(1)
-	}
-
-	in := filepath.Join(*resultDir, "pinned.json")
-	data, err := os.ReadFile(in)
-	if err != nil {
-		log.Fatalf("reading %s: %v", in, err)
-	}
-
-	// Validate: ensure the file is a JSON array of Analysis objects.
+	// Reading into []Analysis also validates the file's shape.
 	var results []Analysis
-	if err := json.Unmarshal(data, &results); err != nil {
-		log.Fatalf("parsing %s: %v", in, err)
+	if err := readJSON(filepath.Join(a.ResultDir, "pinned.json"), &results); err != nil {
+		log.Fatal(err)
 	}
 
-	f, err := os.Create(*out)
-	if err != nil {
-		log.Fatalf("creating %s: %v", *out, err)
-	}
-	if err := json.NewEncoder(f).Encode(results); err != nil {
-		_ = f.Close()
-		log.Fatalf("writing %s: %v", *out, err)
-	}
-	if err := f.Close(); err != nil {
-		log.Fatalf("closing %s: %v", *out, err)
+	if err := writeJSON(a.Out, results); err != nil {
+		log.Fatal(err)
 	}
 
-	fmt.Printf("Exported %d repositories to %s\n", len(results), *out)
+	fmt.Printf("Exported %d repositories to %s\n", len(results), a.Out)
 }

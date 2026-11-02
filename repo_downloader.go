@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -152,16 +151,7 @@ func sleepContext(ctx context.Context, d time.Duration) error {
 }
 
 func (r *RepositoryDownloader) writeStars(stars map[string]int) error {
-	out := filepath.Join(r.config.ResultDir, "stars.json")
-	f, err := os.Create(out)
-	if err != nil {
-		return fmt.Errorf("creating %s: %w", out, err)
-	}
-	if err := json.NewEncoder(f).Encode(stars); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("encoding %s: %w", out, err)
-	}
-	return f.Close()
+	return writeJSON(filepath.Join(r.config.ResultDir, "stars.json"), stars)
 }
 
 func (r *RepositoryDownloader) downloadRepository(ctx context.Context, repository *github.Repository) error {
