@@ -17,13 +17,13 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^frontend/index\\.html$/"],
+      "managerFilePatterns": ["/^frontend/(index|zizmor)\\.html$/"],
       "matchStrings": ["cdn\\.jsdelivr\\.net/npm/(?<depName>@?[^@/]+(?:/[^@/]+)?)@(?<currentValue>[^/\"'\\s]+)"],
       "datasourceTemplate": "npm"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^frontend/index\\.html$/"],
+      "managerFilePatterns": ["/^frontend/(index|zizmor)\\.html$/"],
       "matchStrings": ["cdnjs\\.cloudflare\\.com/ajax/libs/(?<depName>[^/]+)/(?<currentValue>[^/]+)/"],
       "datasourceTemplate": "cdnjs"
     }
@@ -33,6 +33,12 @@
     {
       "groupName": "Go",
       "matchDatasources": ["go"]
+    },
+    {
+      "description": "cdnjs lists a bogus 9000.0.1 release for prism; upstream is 1.x",
+      "matchDatasources": ["cdnjs"],
+      "matchPackageNames": ["prism"],
+      "allowedVersions": "<9000"
     },
     {
       "groupName": "GitHub Actions",
