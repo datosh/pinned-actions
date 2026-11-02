@@ -58,8 +58,8 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		},
 	}
 
-	maxStars := 500000
-	minStars := 1000
+	maxStars := r.config.MaxStars
+	minStars := r.config.MinStars
 
 	stars := make(map[string]int)
 	// Persist the stars of everything seen so far, even if the search fails.

@@ -1,11 +1,12 @@
 package main
 
-import "fmt"
-
 type Config struct {
-	PerPage     int
-	MaxPages    int
-	Query       string
+	PerPage  int
+	MaxPages int
+	// MinStars and MaxStars bound the star range of the first search; later
+	// searches move MaxStars down to page through the results.
+	MinStars    int
+	MaxStars    int
 	DownloadDir string
 	ResultDir   string
 	Analyzers   []string
@@ -15,20 +16,10 @@ func NewConfig() *Config {
 	return &Config{
 		PerPage:     100,
 		MaxPages:    1,
-		Query:       "stars:>1000",
+		MinStars:    1000,
+		MaxStars:    500000,
 		DownloadDir: "/tmp/pinned",
 		ResultDir:   "results",
 		Analyzers:   []string{"pinned"},
 	}
-}
-
-func (c Config) String() string {
-	s := ""
-	s += "PerPage: " + fmt.Sprint(c.PerPage) + "\n"
-	s += "MaxPages: " + fmt.Sprint(c.MaxPages) + "\n"
-	s += "Query: " + c.Query + "\n"
-	s += "DownloadDir: " + c.DownloadDir + "\n"
-	s += "ResultDir: " + c.ResultDir + "\n"
-	s += "Analyzers: " + fmt.Sprint(c.Analyzers) + "\n"
-	return s
 }

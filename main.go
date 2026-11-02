@@ -44,7 +44,7 @@ func main() {
 
 func runScan(args []string) {
 	config := ParseScanArgs(args)
-	log.Printf("Configuration:\n%s", config)
+	log.Printf("Configuration: %+v", config)
 
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {

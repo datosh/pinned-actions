@@ -10,12 +10,12 @@ func ParseScanArgs(args []string) Config {
 	config := NewConfig()
 	fs := flag.NewFlagSet("scan", flag.ExitOnError)
 
-	fs.StringVar(&config.DownloadDir, "download-dir", "/tmp/pinned", "path to folder where repositories will be downloaded")
-	fs.StringVar(&config.ResultDir, "result-dir", "results", "path to folder where analysis results will be written")
-	fs.IntVar(&config.MaxPages, "max-pages", 1, "maximum number of pages to download")
-	fs.IntVar(&config.PerPage, "per-page", 100, "number of repositories to download per page")
+	fs.StringVar(&config.DownloadDir, "download-dir", config.DownloadDir, "path to folder where repositories will be downloaded")
+	fs.StringVar(&config.ResultDir, "result-dir", config.ResultDir, "path to folder where analysis results will be written")
+	fs.IntVar(&config.MaxPages, "max-pages", config.MaxPages, "maximum number of pages to download")
+	fs.IntVar(&config.PerPage, "per-page", config.PerPage, "number of repositories to download per page")
 
-	analyzerFlag := fs.String("analyzer", "pinned", "comma-separated list of analyzers to run (available: "+strings.Join(analyzerNames(), ", ")+")")
+	analyzerFlag := fs.String("analyzer", strings.Join(config.Analyzers, ","), "comma-separated list of analyzers to run (available: "+strings.Join(analyzerNames(), ", ")+")")
 
 	if err := fs.Parse(args); err != nil {
 		fs.PrintDefaults()
