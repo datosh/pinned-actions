@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -68,30 +69,47 @@ func runScan(args []string) {
 		log.Fatalf("configuring analyzers: %v", err)
 	}
 
-	downloaded := make(chan string)
 	downloader := NewRepositoryDownloader(client, config)
+	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, analyzers); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// runPipeline feeds every downloaded repository to all analyzers. Analyzers
+// are always closed, so results gathered so far are flushed even if the
+// download fails part way; all errors are returned together afterwards.
+func runPipeline(
+	ctx context.Context,
+	download func(context.Context, chan string) error,
+	downloadDir string,
+	analyzers []Analyzer,
+) error {
+	downloaded := make(chan string)
+	downloadErr := make(chan error, 1)
 
 	go func() {
-		err := downloader.Download(ctx, downloaded)
-		if err != nil {
-			log.Fatalf("downloading: %v", err)
+		defer close(downloaded)
+		if err := download(ctx, downloaded); err != nil {
+			downloadErr <- fmt.Errorf("downloading: %w", err)
 		}
-		close(downloaded)
+		close(downloadErr)
 	}()
 
 	for repo := range downloaded {
 		for _, a := range analyzers {
-			if err := a.Analyze(ctx, config.DownloadDir, repo); err != nil {
+			if err := a.Analyze(ctx, downloadDir, repo); err != nil {
 				log.Printf("[ERROR] %s: analysing %s: %v", a.Name(), repo, err)
 			}
 		}
 	}
 
+	errs := []error{<-downloadErr}
 	for _, a := range analyzers {
 		if err := a.Close(); err != nil {
-			log.Fatalf("closing analyzer %s: %v", a.Name(), err)
+			errs = append(errs, fmt.Errorf("closing analyzer %s: %w", a.Name(), err))
 		}
 	}
+	return errors.Join(errs...)
 }
 
 func buildAnalyzers(config Config, client *github.Client) ([]Analyzer, error) {

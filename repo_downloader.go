@@ -33,7 +33,7 @@ func NewRepositoryDownloader(client *github.Client, config Config) *RepositoryDo
 	}
 }
 
-func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan string) error {
+func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan string) (err error) {
 	ctx = context.WithValue(ctx, github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	opts := &github.SearchOptions{
@@ -48,6 +48,12 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 	minStars := 1000
 
 	stars := make(map[string]int)
+	// Persist the stars of everything seen so far, even if the search fails.
+	defer func() {
+		if werr := r.writeStars(stars); werr != nil {
+			err = errors.Join(err, fmt.Errorf("writing stars: %w", werr))
+		}
+	}()
 
 	for i := 0; i < r.config.MaxPages; i++ {
 		query := buildQuery(minStars, maxStars)
@@ -83,10 +89,6 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			log.Printf("Handled all pages after %d requests.\n", i+1)
 			break
 		}
-	}
-
-	if err := r.writeStars(stars); err != nil {
-		return fmt.Errorf("writing stars: %w", err)
 	}
 
 	return nil
