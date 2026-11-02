@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,13 +42,19 @@ func main() {
 	}
 }
 
+// fatal logs an error and exits with a non-zero status.
+func fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
+}
+
 func runScan(args []string) {
 	config := ParseScanArgs(args)
-	log.Printf("Configuration: %+v", config)
+	slog.Info("scan configuration", "config", config)
 
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		log.Printf("[WARN] GITHUB_TOKEN not set; unauthenticated search requests are heavily rate-limited and may return incomplete results")
+		slog.Warn("GITHUB_TOKEN not set; unauthenticated search requests are heavily rate-limited and may return incomplete results")
 	}
 	var opts []github.ClientOptionsFunc
 	if token != "" {
@@ -57,7 +63,7 @@ func runScan(args []string) {
 	}
 	client, err := github.NewClient(opts...)
 	if err != nil {
-		log.Fatalf("creating GitHub client: %v", err)
+		fatal("creating GitHub client", "error", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -66,23 +72,23 @@ func runScan(args []string) {
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-signals
-		log.Printf("Received %v; flushing results (signal again to abort)", sig)
+		slog.Info("received signal; flushing results (signal again to abort)", "signal", sig)
 		signal.Stop(signals) // a second signal now kills the process
 		cancel()
 	}()
 
 	if err := os.MkdirAll(config.ResultDir, 0o755); err != nil {
-		log.Fatalf("creating result directory: %v", err)
+		fatal("creating result directory", "path", config.ResultDir, "error", err)
 	}
 
 	analyzers, err := buildAnalyzers(config, client)
 	if err != nil {
-		log.Fatalf("configuring analyzers: %v", err)
+		fatal("configuring analyzers", "error", err)
 	}
 
 	downloader := NewRepositoryDownloader(client, config)
 	if err := runPipeline(ctx, downloader.Download, config.DownloadDir, analyzers); err != nil {
-		log.Fatal(err)
+		fatal("scan failed", "error", err)
 	}
 }
 
@@ -112,7 +118,7 @@ func runPipeline(
 		}
 		for _, a := range analyzers {
 			if err := a.Analyze(ctx, downloadDir, repo); err != nil {
-				log.Printf("[ERROR] %s: analysing %s: %v", a.Name(), repo, err)
+				slog.Error("analysis failed", "analyzer", a.Name(), "repo", repo, "error", err)
 			}
 		}
 	}

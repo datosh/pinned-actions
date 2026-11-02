@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -72,7 +72,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 	incompleteRetries := 0
 	for i := 0; i < r.config.MaxPages; i++ {
 		query := buildQuery(minStars, maxStars)
-		log.Printf("Searching repos with: %s\n", query)
+		slog.Info("searching repositories", "query", query)
 		searchResult, _, err := r.client.Search.Repositories(ctx, query, opts)
 		if err != nil {
 			return fmt.Errorf("searching repositories: %w", err)
@@ -88,7 +88,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			}
 			delay := r.retryDelay << incompleteRetries
 			incompleteRetries++
-			log.Printf("[WARN] GitHub returned incomplete results for query %q — retrying in %s\n", query, delay)
+			slog.Warn("GitHub returned incomplete results; retrying", "query", query, "delay", delay)
 			if err := sleepContext(ctx, delay); err != nil {
 				return err
 			}
@@ -97,7 +97,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		}
 		incompleteRetries = 0
 
-		log.Printf("Found %d repositories\n", len(searchResult.Repositories))
+		slog.Info("found repositories", "count", len(searchResult.Repositories))
 
 		newRepos := 0
 		lastStars := maxStars
@@ -113,14 +113,14 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 			newRepos++
 			stars[name] = lastStars
 			if err := r.clone(ctx, repository); err != nil {
-				log.Printf("[ERROR] downloading repository: %v", err)
+				slog.Error("downloading repository failed", "repo", name, "error", err)
 				continue
 			}
 			downloaded <- name
 		}
 
 		if len(searchResult.Repositories) < r.config.PerPage {
-			log.Printf("Handled all pages after %d requests.\n", i+1)
+			slog.Info("handled all pages", "requests", i+1)
 			break
 		}
 
@@ -130,7 +130,7 @@ func (r *RepositoryDownloader) Download(ctx context.Context, downloaded chan str
 		// we have to move on, losing the remainder of it.
 		maxStars = lastStars
 		if newRepos == 0 {
-			log.Printf("[WARN] more than %d repositories with %d stars; some are skipped\n", r.config.PerPage, lastStars)
+			slog.Warn("more repositories tied on stars than fit on a page; some are skipped", "per_page", r.config.PerPage, "stars", lastStars)
 			maxStars--
 		}
 	}
@@ -160,10 +160,7 @@ func (r *RepositoryDownloader) downloadRepository(ctx context.Context, repositor
 	}
 
 	cloneURL := repository.GetCloneURL()
-	log.Printf("Clone from: %s\n", cloneURL)
-
 	cloneInto := filepath.Join(r.config.DownloadDir, *repository.FullName)
-	log.Printf("Clone into: %s\n", cloneInto)
 
 	cloned, err := exists(cloneInto)
 	if err != nil {
@@ -175,12 +172,13 @@ func (r *RepositoryDownloader) downloadRepository(ctx context.Context, repositor
 			return nil
 		}
 		// A broken clone (e.g. from an interrupted earlier run) is replaced.
-		log.Printf("[WARN] refreshing %s failed, cloning again: %v\n", cloneInto, err)
+		slog.Warn("refreshing clone failed, cloning again", "path", cloneInto, "error", err)
 		if err := os.RemoveAll(cloneInto); err != nil {
 			return fmt.Errorf("removing broken clone %s: %w", cloneInto, err)
 		}
 	}
 
+	slog.Info("cloning repository", "from", cloneURL, "into", cloneInto)
 	err = runGit(ctx, "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto)
 	if err != nil {
 		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
@@ -197,7 +195,7 @@ func (r *RepositoryDownloader) downloadRepository(ctx context.Context, repositor
 // refreshClone moves an existing shallow clone to the current remote HEAD, so
 // repeated scans do not analyze stale checkouts.
 func refreshClone(ctx context.Context, dir string) error {
-	log.Printf("Refreshing existing clone: %s\n", dir)
+	slog.Info("refreshing existing clone", "path", dir)
 	if err := runGit(ctx, "-C", dir, "fetch", "--depth", "1", "origin", "HEAD"); err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -42,11 +41,11 @@ func runExportPinned(args []string) {
 	// Reading into []Analysis also validates the file's shape.
 	var results []Analysis
 	if err := readJSON(filepath.Join(a.ResultDir, "pinned.json"), &results); err != nil {
-		log.Fatal(err)
+		fatal("export failed", "error", err)
 	}
 
 	if err := writeJSON(a.Out, results); err != nil {
-		log.Fatal(err)
+		fatal("export failed", "error", err)
 	}
 
 	fmt.Printf("Exported %d repositories to %s\n", len(results), a.Out)

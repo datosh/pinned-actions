@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -147,7 +147,7 @@ func countActions(dirs []string, analysis *Analysis) error {
 				analysis.ActionsTotal++
 			}
 		default:
-			log.Printf("[WARN] unknown action type: %s", action.Type)
+			slog.Warn("unknown action type", "type", action.Type)
 		}
 	}
 	return nil

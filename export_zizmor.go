@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -37,12 +36,12 @@ func runExportZizmor(args []string) {
 
 	var stars map[string]int
 	if err := readJSON(filepath.Join(a.ResultDir, "stars.json"), &stars); err != nil {
-		log.Fatal(err)
+		fatal("export failed", "error", err)
 	}
 
 	var raw []ZizmorResult
 	if err := readJSON(filepath.Join(a.ResultDir, "zizmor.json"), &raw); err != nil {
-		log.Fatal(err)
+		fatal("export failed", "error", err)
 	}
 
 	web := make([]ZizmorWebResult, 0, len(raw))
@@ -57,13 +56,13 @@ func runExportZizmor(args []string) {
 
 	jsonData, err := json.Marshal(web)
 	if err != nil {
-		log.Fatalf("marshalling data: %v", err)
+		fatal("marshalling data", "error", err)
 	}
 
 	// The frontend loads this as a script, so it is JS rather than plain JSON.
 	script := fmt.Sprintf("const ZIZMOR_DATA = %s;\n", jsonData)
 	if err := os.WriteFile(a.Out, []byte(script), 0o644); err != nil {
-		log.Fatalf("writing %s: %v", a.Out, err)
+		fatal("writing output", "path", a.Out, "error", err)
 	}
 
 	total := 0
