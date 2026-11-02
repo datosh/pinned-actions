@@ -1,0 +1,221 @@
+{
+  "cli_version": "v0.4.1",
+  "findings": [
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "not-pinned",
+      "severity": "error",
+      "confidence": "high",
+      "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "detail": "used in workflow but not pinned in lockfile (actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1)",
+      "remediation": "pin with `gh actions-lock`",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+    },
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "not-pinned",
+      "severity": "error",
+      "confidence": "high",
+      "dependency": "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+      "detail": "used in workflow but not pinned in lockfile (actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e)",
+      "remediation": "pin with `gh actions-lock`",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+    },
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "not-pinned",
+      "severity": "error",
+      "confidence": "high",
+      "dependency": "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a",
+      "detail": "used in workflow but not pinned in lockfile (golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a)",
+      "remediation": "pin with `gh actions-lock`",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+    },
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "sha-as-ref",
+      "severity": "warning",
+      "confidence": "high",
+      "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+      "remediation": "pin to a tag instead: https://github.com/actions/checkout/releases",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+    },
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "sha-as-ref",
+      "severity": "warning",
+      "confidence": "high",
+      "dependency": "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+      "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+      "remediation": "pin to a tag instead: https://github.com/actions/setup-go/releases",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+    },
+    {
+      "workflow": ".github/workflows/ci.yml",
+      "category": "sha-as-ref",
+      "severity": "warning",
+      "confidence": "high",
+      "dependency": "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a",
+      "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+      "remediation": "pin to a tag instead: https://github.com/golangci/golangci-lint-action/releases",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+    },
+    {
+      "workflow": ".github/workflows/zizmor.yml",
+      "category": "not-pinned",
+      "severity": "error",
+      "confidence": "high",
+      "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "detail": "used in workflow but not pinned in lockfile (actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1)",
+      "remediation": "pin with `gh actions-lock`",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+    },
+    {
+      "workflow": ".github/workflows/zizmor.yml",
+      "category": "not-pinned",
+      "severity": "error",
+      "confidence": "high",
+      "dependency": "zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b",
+      "detail": "used in workflow but not pinned in lockfile (zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b)",
+      "remediation": "pin with `gh actions-lock`",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+    },
+    {
+      "workflow": ".github/workflows/zizmor.yml",
+      "category": "sha-as-ref",
+      "severity": "warning",
+      "confidence": "high",
+      "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+      "remediation": "pin to a tag instead: https://github.com/actions/checkout/releases",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+    },
+    {
+      "workflow": ".github/workflows/zizmor.yml",
+      "category": "sha-as-ref",
+      "severity": "warning",
+      "confidence": "high",
+      "dependency": "zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b",
+      "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+      "remediation": "pin to a tag instead: https://github.com/zizmorcore/zizmor-action/releases",
+      "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+    }
+  ],
+  "lockfile_version": "v0.0.3",
+  "valid": false,
+  "workflows": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "valid": false,
+      "findings": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "not-pinned",
+          "severity": "error",
+          "confidence": "high",
+          "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "detail": "used in workflow but not pinned in lockfile (actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1)",
+          "remediation": "pin with `gh actions-lock`",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+        },
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "not-pinned",
+          "severity": "error",
+          "confidence": "high",
+          "dependency": "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+          "detail": "used in workflow but not pinned in lockfile (actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e)",
+          "remediation": "pin with `gh actions-lock`",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+        },
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "not-pinned",
+          "severity": "error",
+          "confidence": "high",
+          "dependency": "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a",
+          "detail": "used in workflow but not pinned in lockfile (golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a)",
+          "remediation": "pin with `gh actions-lock`",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+        },
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "sha-as-ref",
+          "severity": "warning",
+          "confidence": "high",
+          "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+          "remediation": "pin to a tag instead: https://github.com/actions/checkout/releases",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+        },
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "sha-as-ref",
+          "severity": "warning",
+          "confidence": "high",
+          "dependency": "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e",
+          "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+          "remediation": "pin to a tag instead: https://github.com/actions/setup-go/releases",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+        },
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "category": "sha-as-ref",
+          "severity": "warning",
+          "confidence": "high",
+          "dependency": "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a",
+          "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+          "remediation": "pin to a tag instead: https://github.com/golangci/golangci-lint-action/releases",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/zizmor.yml",
+      "valid": false,
+      "findings": [
+        {
+          "workflow": ".github/workflows/zizmor.yml",
+          "category": "not-pinned",
+          "severity": "error",
+          "confidence": "high",
+          "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "detail": "used in workflow but not pinned in lockfile (actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1)",
+          "remediation": "pin with `gh actions-lock`",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+        },
+        {
+          "workflow": ".github/workflows/zizmor.yml",
+          "category": "not-pinned",
+          "severity": "error",
+          "confidence": "high",
+          "dependency": "zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b",
+          "detail": "used in workflow but not pinned in lockfile (zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b)",
+          "remediation": "pin with `gh actions-lock`",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#not-pinned"
+        },
+        {
+          "workflow": ".github/workflows/zizmor.yml",
+          "category": "sha-as-ref",
+          "severity": "warning",
+          "confidence": "high",
+          "dependency": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+          "remediation": "pin to a tag instead: https://github.com/actions/checkout/releases",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+        },
+        {
+          "workflow": ".github/workflows/zizmor.yml",
+          "category": "sha-as-ref",
+          "severity": "warning",
+          "confidence": "high",
+          "dependency": "zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b",
+          "detail": "pinned to a bare SHA without a symbolic ref — weakens supply-chain traceability",
+          "remediation": "pin to a tag instead: https://github.com/zizmorcore/zizmor-action/releases",
+          "doc_url": "https://github.com/github/gh-actions-lock/blob/main/docs/troubleshooting.md#sha-as-ref"
+        }
+      ]
+    }
+  ]
+}
