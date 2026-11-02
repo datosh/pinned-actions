@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"syscall"
 	"time"
 
@@ -175,21 +177,46 @@ func (r *RepositoryDownloader) downloadRepository(repository *github.Repository)
 		return fmt.Errorf("checking %s: %w", cloneInto, err)
 	}
 	if cloned {
-		log.Printf("Repository already exists: %s\n", cloneInto)
-		// TODO: Fetch latest changes
-		return nil
+		err := refreshClone(cloneInto)
+		if err == nil {
+			return nil
+		}
+		// A broken clone (e.g. from an interrupted earlier run) is replaced.
+		log.Printf("[WARN] refreshing %s failed, cloning again: %v\n", cloneInto, err)
+		if err := os.RemoveAll(cloneInto); err != nil {
+			return fmt.Errorf("removing broken clone %s: %w", cloneInto, err)
+		}
 	}
 
-	err = exec.Command("git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto).Run()
+	err = runGit("clone", "--depth", "1", "--filter=blob:none", "--sparse", cloneURL, cloneInto)
 	if err != nil {
 		return fmt.Errorf("cloning repository %s into %s: %w", cloneURL, cloneInto, err)
 	}
 
-	err = exec.Command("git", "-C", cloneInto, "sparse-checkout", "set", ".github").Run()
+	err = runGit("-C", cloneInto, "sparse-checkout", "set", ".github")
 	if err != nil {
 		return fmt.Errorf("setting sparse checkout for %s: %w", cloneInto, err)
 	}
 
+	return nil
+}
+
+// refreshClone moves an existing shallow clone to the current remote HEAD, so
+// repeated scans do not analyze stale checkouts.
+func refreshClone(dir string) error {
+	log.Printf("Refreshing existing clone: %s\n", dir)
+	if err := runGit("-C", dir, "fetch", "--depth", "1", "origin", "HEAD"); err != nil {
+		return err
+	}
+	return runGit("-C", dir, "reset", "--hard", "FETCH_HEAD")
+}
+
+// runGit runs git and includes its output in the returned error.
+func runGit(args ...string) error {
+	out, err := exec.Command("git", args...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, bytes.TrimSpace(out))
+	}
 	return nil
 }
 
