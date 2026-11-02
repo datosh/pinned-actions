@@ -44,7 +44,7 @@ $ go run . scan -h
 |---|---|---|
 | `pinned` | `git` | Share of `uses:` references pinned to a commit SHA / OCI digest, plus Renovate/Dependabot config |
 | `zizmor` | `zizmor` on `$PATH` | [zizmor](https://github.com/zizmorcore/zizmor) findings for `.github/` |
-| `lockfile` | `gh` with the `actions-lock` extension | Whether `.github/workflows/actions.lock` ([workflow lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)) exists, and how many workflows the repository has |
+| `lockfile` | `gh` with the `actions-lock` extension | Whether `.github/workflows/actions.lock` ([workflow lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)) exists, how many of the repository's workflows it lists, and whether `gh actions-lock --verify-local` finds it complete |
 | `immutable` | `GITHUB_TOKEN` | Whether the latest release is marked immutable |
 
 Set `GITHUB_TOKEN` for any real run. Without it, search requests are heavily

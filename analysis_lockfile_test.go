@@ -106,9 +106,10 @@ func TestCheckLockfileCLIVersion(t *testing.T) {
 	}
 }
 
-// TestNewLockfileAnalyzer runs the real CLI; it is skipped unless gh and the
-// actions-lock extension are installed.
-func TestNewLockfileAnalyzer(t *testing.T) {
+// lockfileAnalyzerOrSkip returns an analyzer backed by the real CLI, or skips
+// the test unless gh and the actions-lock extension are installed.
+func lockfileAnalyzerOrSkip(t *testing.T) *LockfileAnalyzer {
+	t.Helper()
 	gh, err := exec.LookPath("gh")
 	if err != nil {
 		t.Skip("gh not on $PATH")
@@ -116,11 +117,80 @@ func TestNewLockfileAnalyzer(t *testing.T) {
 	if err := exec.Command(gh, "actions-lock", "--version").Run(); err != nil {
 		t.Skip("gh actions-lock not installed")
 	}
-
 	a, err := NewLockfileAnalyzer()
-
 	require.NoError(t, err)
-	assert.NotEmpty(t, a.gh)
+	return a
+}
+
+func TestNewLockfileAnalyzer(t *testing.T) {
+	assert.NotEmpty(t, lockfileAnalyzerOrSkip(t).gh)
+}
+
+func TestLockfileAnalyzerVerifiesWithCLI(t *testing.T) {
+	a := lockfileAnalyzerOrSkip(t)
+
+	tests := []struct {
+		repo         string
+		wantComplete bool
+		wantMalform  bool
+	}{
+		{repo: "locked", wantComplete: true},
+		{repo: "stale"},
+		{repo: "not-onboarded"},
+		{repo: "malformed", wantMalform: true},
+	}
+	for _, test := range tests {
+		t.Run(test.repo, func(t *testing.T) {
+			got, err := a.Analyze(context.Background(), "testdata/lockfile", test.repo)
+			require.NoError(t, err)
+
+			result, ok := got.(LockfileResult)
+			require.True(t, ok)
+			assert.Equal(t, test.wantComplete, result.Complete)
+			assert.Equal(t, test.wantMalform, result.Malformed)
+			if !test.wantComplete && !test.wantMalform {
+				assert.Contains(t, result.Findings, "not-pinned", "a used action is missing from the lockfile")
+			}
+			if test.wantComplete {
+				assert.Empty(t, result.Findings)
+			}
+		})
+	}
+}
+
+func TestParseVerifyLocal(t *testing.T) {
+	t.Run("real output for a repository without a lockfile", func(t *testing.T) {
+		data, err := os.ReadFile("testdata/lockfile/verify-local-no-lockfile.json")
+		require.NoError(t, err)
+
+		complete, categories, err := parseVerifyLocal(data)
+
+		require.NoError(t, err)
+		assert.False(t, complete)
+		assert.Equal(t, []string{"not-pinned", "sha-as-ref"}, categories, "distinct and sorted")
+	})
+
+	t.Run("complete", func(t *testing.T) {
+		// Shape of the real output for this repository's own lockfile.
+		complete, categories, err := parseVerifyLocal([]byte(`{"cli_version":"v0.4.1","findings":[],"lockfile_version":"v0.0.3","valid":true,"workflows":[]}`))
+
+		require.NoError(t, err)
+		assert.True(t, complete)
+		assert.Empty(t, categories)
+	})
+
+	t.Run("findings may be null", func(t *testing.T) {
+		complete, categories, err := parseVerifyLocal([]byte(`{"valid":false,"findings":null}`))
+
+		require.NoError(t, err)
+		assert.False(t, complete)
+		assert.Empty(t, categories)
+	})
+
+	t.Run("not JSON", func(t *testing.T) {
+		_, _, err := parseVerifyLocal([]byte("error: no workflow files found"))
+		assert.ErrorContains(t, err, "parsing")
+	})
 }
 
 func TestParseLockfile(t *testing.T) {
