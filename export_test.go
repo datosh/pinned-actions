@@ -64,6 +64,17 @@ func TestBucketPinnedWithLockfiles(t *testing.T) {
 	}, got)
 }
 
+func TestPinnedBucketsString(t *testing.T) {
+	withLockfile := 4
+
+	assert.Equal(t,
+		"pinned=221 locked=3 partially-pinned=210 unpinned=371 no-actions=185 with-lockfile=4 scanned=2026-11-02",
+		PinnedBuckets{Pinned: 221, Locked: 3, PartiallyPinned: 210, Unpinned: 371, NoActions: 185, WithLockfile: &withLockfile, Scanned: "2026-11-02"}.String())
+	assert.Equal(t,
+		"pinned=1 locked=0 partially-pinned=0 unpinned=0 no-actions=0 with-lockfile=unknown scanned=",
+		PinnedBuckets{Pinned: 1}.String())
+}
+
 func TestReadLockfileResults(t *testing.T) {
 	dir := t.TempDir()
 

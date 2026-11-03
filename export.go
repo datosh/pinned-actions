@@ -55,6 +55,17 @@ type PinnedBuckets struct {
 	Scanned      string `json:"scanned,omitempty"` // YYYY-MM-DD
 }
 
+// String is the one-line summary printed by export-pinned. (%+v would print the
+// address of WithLockfile.)
+func (b PinnedBuckets) String() string {
+	withLockfile := "unknown"
+	if b.WithLockfile != nil {
+		withLockfile = strconv.Itoa(*b.WithLockfile)
+	}
+	return fmt.Sprintf("pinned=%d locked=%d partially-pinned=%d unpinned=%d no-actions=%d with-lockfile=%s scanned=%s",
+		b.Pinned, b.Locked, b.PartiallyPinned, b.Unpinned, b.NoActions, withLockfile, b.Scanned)
+}
+
 // bucketPinned sorts repositories into the disjoint buckets. A repository
 // whose actions are all SHA-pinned counts as pinned, else one with a complete
 // lockfile as locked, else it is partially pinned or unpinned. lockfiles is
@@ -174,5 +185,5 @@ func runExportPinned(args []string) {
 		}
 	}
 
-	fmt.Printf("Scanned %d repositories; %+v recorded for %s in %s\n", len(results), buckets, year, a.Out)
+	fmt.Printf("Scanned %d repositories; %s recorded for %s in %s\n", len(results), buckets, year, a.Out)
 }
