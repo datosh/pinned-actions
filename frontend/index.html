@@ -5,147 +5,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Pin GitHub Actions</title>
+    <title>Lock GitHub Actions</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.3"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism.css" rel="stylesheet" />
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.js"></script>
-    <script src="pinned-actions-chart.js"></script>
-
-    <style>
-        #yearSlider::-webkit-slider-thumb { cursor: pointer; }
-        #yearSlider::-moz-range-thumb { cursor: pointer; }
-    </style>
 </head>
 
-<body class="flex flex-col items-center py-6 bg-gray-100 min-h-screen">
-    <!-- Title  -->
+<!-- MOCKUP: numbers come from the 2026-11 10k scan (real), the lockfile history is empty on purpose
+     because lockfiles did not exist before October 2026. Wording is a draft. -->
+
+<body class="flex flex-col items-center py-6 bg-gray-100 min-h-screen text-gray-800">
     <header class="w-full bg-white shadow-sm py-4 mb-6">
-        <h1 class="text-2xl font-bold text-center">Pin GitHub Actions</h1>
-        <p class="text-center text-gray-500 text-sm mt-1">GitHub Actions security analysis of the top 10,000 repositories &mdash; by <a href="https://www.linkedin.com/in/fabian-kammel-7781b7173/" class="hover:underline text-gray-600" target="_blank" rel="noopener noreferrer">Fabian Kammel</a></p>
+        <h1 class="text-2xl font-bold text-center">Lock GitHub Actions</h1>
+        <p class="text-center text-gray-500 text-sm mt-1">GitHub Actions security analysis of the top 10,000 repositories, by <a href="https://www.linkedin.com/in/fabian-kammel-7781b7173/" class="hover:underline text-gray-600" target="_blank" rel="noopener noreferrer">Fabian Kammel</a></p>
+        <nav class="flex justify-center gap-2 text-sm mt-2">
+            <a href="#lockfile" class="px-2 py-2 text-blue-500 hover:underline">Lockfiles</a>
+            <a href="#history" class="px-2 py-2 text-blue-500 hover:underline">Pinning history</a>
+            <a href="zizmor.html" class="px-2 py-2 text-blue-500 hover:underline">zizmor findings</a>
+        </nav>
     </header>
 
-    <!-- Chart & Result  -->
-    <div class="flex flex-col md:flex-row items-center justify-center max-w-4xl bg-white shadow-sm p-12 rounded-lg">
-        <div class="w-full max-w-sm">
-            <!-- Year Slider -->
-            <div class="mb-4 text-center">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                    Select Year: <span id="selectedYear" class="font-bold"></span>
-                </label>
-                <div class="px-2">
-                    <input type="range" id="yearSlider" min="0" max="0" step="1" value="0"
-                        class="w-full accent-gray-700">
-                    <div id="yearLabels" class="flex justify-between text-xs text-gray-500 mt-1"></div>
-                </div>
+    <!-- 1. Hero: lockfiles are the new answer -->
+    <section id="lockfile" class="w-full max-w-4xl bg-white shadow-sm p-5 sm:p-10 rounded-lg">
+        <p class="text-xs uppercase tracking-wide text-green-700 font-semibold text-center">The new best practice</p>
+        <h2 class="text-3xl font-bold text-center mt-1">Lock your Actions with <code>actions.lock</code></h2>
+        <p class="mt-4 text-base text-center max-w-2xl mx-auto">In October 2026 GitHub introduced
+            <a class="text-blue-500 hover:underline" href="https://github.blog/changelog/2026-10-14-github-actions-workflow-lockfiles-in-public-preview/">workflow lockfiles</a>.
+            A lockfile records the exact commit of every Action a workflow uses, <b>including the Actions those Actions use</b>,
+            while your workflows keep readable tags.</p>
+
+        <div class="grid grid-cols-3 gap-4 mt-8 text-center">
+            <div><div id="lockedCount" class="text-4xl font-bold text-green-700">21</div>
+                <div class="text-sm text-gray-600 mt-1">repositories have an <code>actions.lock</code></div></div>
+            <div><div id="lockedPct" class="text-4xl font-bold text-green-700">0.3%</div>
+                <div class="text-sm text-gray-600 mt-1">of the 6,523 repositories that use Actions</div></div>
+            <div><div id="lockedComplete" class="text-4xl font-bold text-green-700">19</div>
+                <div class="text-sm text-gray-600 mt-1">of those lock <i>every</i> workflow completely</div></div>
+        </div>
+    </section>
+
+    <!-- 2. Why: pinning vs locking -->
+    <section class="mt-6 w-full max-w-4xl bg-white shadow-sm p-5 sm:p-10 rounded-lg">
+        <h2 class="text-2xl font-bold text-center mb-6">Why locking replaces pinning</h2>
+        <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div class="border border-gray-200 rounded-lg p-5">
+                <h3 class="font-bold text-base">Pinning by SHA <span class="text-xs font-normal text-gray-400">(the old answer)</span></h3>
+                <pre class="rounded-md bg-gray-900 text-gray-100 p-3 mt-3 text-xs whitespace-pre-wrap [overflow-wrap:anywhere]"><code>uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1</code></pre>
+                <ul class="list-disc ml-5 mt-3 space-y-1">
+                    <li>Immutable, but not human readable</li>
+                    <li>SHA and comment may drift</li>
+                    <li>Only covers the Actions you reference. A composite Action's own <code>uses:</code> <a class="text-blue-500 hover:underline" href="https://www.paloaltonetworks.com/blog/prisma-cloud/unpinnable-actions-github-security/">stay mutable</a></li>
+                    <li>Needs tooling for migration and updates</li>
+                </ul>
             </div>
-            <canvas id="pinnedActionsChart"></canvas>
+            <div class="border-2 border-green-600 rounded-lg p-5">
+                <h3 class="font-bold text-base">Locking <span class="text-xs font-normal text-green-700">(the new answer)</span></h3>
+                <pre class="rounded-md bg-gray-900 text-gray-100 p-3 mt-3 text-xs whitespace-pre-wrap [overflow-wrap:anywhere]"><code># workflow
+uses: actions/checkout@v4
+
+# .github/workflows/actions.lock
+actions/checkout@v4: b4ffde65f4...</code></pre>
+                <ul class="list-disc ml-5 mt-3 space-y-1">
+                    <li>Readable workflows, finally! &lt;3</li>
+                    <li>Immutable resolution</li>
+                    <li>Covers transitive dependencies</li>
+                    <li>First class support in gh CLI</li>
+                </ul>
+            </div>
         </div>
-        <div class="mt-6 md:mt-0 md:ml-8 text-justify">
-            <p class="mt-2 text-base">GitHub recommends to <a class="text-blue-500 hover:underline"
-                    href="https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions">pin
-                    an Action to a full length commit SHA </a> as it is currently <b>the only way to use an Action as an
-                    <u>immutable</u> release.</b></p>
-            <p class="mt-2 text-base">Still, <b>only <span id="fullyPinnedPercent">7</span>%</b> of GitHub repositories fully embrace this security
-                best practice!</p>
+    </section>
 
-            <p class="mt-2 text-base">The data was last updated in <span id="lastUpdated">April 2026</span> and shows the top 10,000 GitHub repositories (by stars). ~<span id="noActionsPercent">40</span>% of repositories aren't using Actions, and are excluded from the chart.</p>
+    <!-- 3. How to adopt -->
+    <section class="mt-6 w-full max-w-4xl bg-white shadow-sm p-5 sm:p-10 rounded-lg">
+        <h2 class="text-2xl font-bold text-center">How to adopt it</h2>
+        <h3 class="mt-4 text-xl font-bold">1. Generate the lockfile</h3>
+        <pre class="rounded-md whitespace-pre-wrap [overflow-wrap:anywhere] bg-gray-900 text-gray-100 p-3 mt-2 text-sm"><code>gh extension install github/gh-actions-lock
+gh actions-lock</code></pre>
+        <h3 class="mt-4 text-xl font-bold">2. Keep it fresh</h3>
+        <p class="mt-2 text-base">Both <a class="text-blue-500 hover:underline" href="https://docs.renovatebot.com/modules/manager/github-actions/#github-actions-lockfile-actionslock">Renovate</a>
+            and <a class="text-blue-500 hover:underline" href="https://docs.github.com/en/actions/how-tos/secure-your-work/lock-workflow-dependencies">Dependabot</a>
+            already have (experimental) support for action lockfiles and regenerate <code>actions.lock</code> in their update pull requests.</p>
+        <h3 class="mt-4 text-xl font-bold">3. Verify in CI</h3>
+        <pre class="rounded-md whitespace-pre-wrap [overflow-wrap:anywhere] bg-gray-900 text-gray-100 p-3 mt-2 text-sm"><code>gh actions-lock --verify-local</code></pre>
+        <p class="mt-2 text-base">Then audit with <a class="text-blue-500 hover:underline" href="https://docs.zizmor.sh/">zizmor</a> (1.32+ reads the lockfile).</p>
+    </section>
 
-            <p class="mt-2 text-base">Download the raw data ~140kb tar.gz <a href="results-may-2024.json.tar.gz" class="text-blue-500 hover:underline">[2024]</a> <a href="results-june-2025.json.tar.gz" class="text-blue-500 hover:underline">[2025]</a> <a href="results-april-2026.json.tar.gz" class="text-blue-500 hover:underline">[2026]</a>, if you want to analyze it further! The code to generate this data is available on
-                <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions">GitHub</a>, please
-                <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions/issues/new">report any issue</a>.
-            </p>
+    <!-- 4. Adoption today + history -->
+    <section id="history" class="mt-6 w-full max-w-4xl bg-white shadow-sm p-5 sm:p-10 rounded-lg">
+        <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold text-center">History</p>
+        <h2 class="text-2xl font-bold text-center">Pinning used to be the best practice</h2>
+        <p class="mt-3 text-base text-center max-w-2xl mx-auto">Since 2024 we track how many of the top 10,000 repositories
+            pin their Actions by SHA. It is still a valid hardening step, but lockfiles are more powerful and user-friendly and recommended going forward.</p>
+
+        <div class="mt-6 relative h-72"><canvas id="historyChart"></canvas></div>
+
+        <div class="overflow-x-auto mt-6">
+            <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+                <thead class="text-left text-gray-500 border-b">
+                    <tr class="[&>th]:pr-2 [&>th]:py-1">
+                        <th>Scan</th>
+                        <th><span class="sm:hidden">Pinned</span><span class="hidden sm:inline">Fully pinned</span></th>
+                        <th>Locked</th>
+                        <th><span class="sm:hidden">Partial</span><span class="hidden sm:inline">Partially</span></th>
+                        <th>Unpinned</th>
+                        <th class="hidden sm:table-cell">Uses Actions</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable"></tbody>
+            </table>
         </div>
-    </div>
+    </section>
 
-    <!-- Motivation -->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow-sm p-12 rounded-lg text-justify">
-        <h2 class="text-2xl font-bold text-center mb-4">Why you should pin your GitHub Actions?</h2>
-        <p class="mt-2 text-base">Most GitHub Action pipelines are composed of 3rd party Actions. To use one, point to a git repository that hosts this Action and reference a version, such as a branch (<code class="language-yaml">@main</code>) or a tag (<code class="language-yaml">@v1</code>).</p>
-        <div class="relative my-4 w-full max-w-3xl mx-auto">
-            <pre class="rounded-md overflow-auto bg-gray-900 p-4">
-                <code class="language-yaml">
-  jobs:
-    build:
-      steps:
-        - name: Check out repository
-          uses: actions/checkout@v4</code>
-            </pre>
+    <!-- 5. zizmor teaser -->
+    <section class="mt-6 w-full max-w-4xl bg-white shadow-sm p-5 sm:p-10 rounded-lg flex flex-col md:flex-row gap-6 items-center">
+        <div class="flex-1">
+            <h2 class="text-2xl font-bold">Beyond locking &amp; pinning: zizmor findings</h2>
+            <p class="mt-2 text-base">Pinning and locking fix one class of problem. We also ran
+                <a class="text-blue-500 hover:underline" href="https://docs.zizmor.sh/">zizmor</a>, a GitHub Actions security analyzer, over every workflow.
+                This uncovered <b><span id="zizFindings">347,954</span> findings</b> over the ~10,000 scanned repositories. Browse them per repository and rule.</p>
+            <a href="zizmor.html" class="inline-block mt-4 px-4 py-2 rounded-md bg-gray-800 text-white text-sm hover:bg-gray-700">Open the explorer &rarr;</a>
         </div>
-        <p class="mt-2 text-base">This references the <a class="text-blue-500 hover:underline"
-                href="https://github.com/actions/checkout/tree/v4">v4 tag</a> in the <a
-                class="text-blue-500 hover:underline" href="https://github.com/actions/checkout">actions/checkout</a>
-            GitHub repository.</p>
-        <p class="mt-2 text-base">Referencing a branch is a <b>mutable reference</b>, meaning that the Action will change as the branch is updated.</p>
-        <p class="mt-2 text-base">A less known fact is that <b>a tag is also a mutable reference</b>. The maintainer of a repository (or a malicious attacker) can delete a tag and create a new one with the same name, effectively changing the Action that is being used. This mechanism is used by the Actions/checkout maintainers to <a class="text-blue-500 hover:underline" href="https://github.com/actions/checkout/blob/v4/.github/workflows/update-main-version.yml">always point the @v4 tag to the latest version</a> of the action.</p>
+        <div class="w-full md:w-64"><canvas id="zizChart"></canvas></div>
+    </section>
 
-        <p class="mt-2 text-base">To avoid this, <b>reference a specific commit hash, an immutable reference.</b> The action will always be the same, even if the tag is deleted.</p>
+    <footer class="mt-6 mb-4 text-center text-sm text-gray-500">
+        <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions">Code on GitHub</a>
+        &middot; Found a bug? <a class="text-blue-500 hover:underline" href="https://github.com/datosh/pinned-actions/issues/new">Create an issue!</a>
+    </footer>
 
-        <div class="relative my-4 w-full max-w-3xl mx-auto">
-            <pre class="rounded-md overflow-auto bg-gray-900 p-4">
-                <code class="language-yaml">
-  jobs:
-    build:
-      steps:
-        - name: Check out repository
-          uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1</code>
-            </pre>
-        </div>
+    <script src="zizmor-web.js"></script>
+    <script>
+        // 2026-11 is real scan data; older rows are pinned.json. null = not measured.
+        const scans = [
+            { label: '2024-05', pinned: 112, locked: null, partial: 639, unpinned: 4739, data: 'results-may-2024.json.tar.gz' },
+            { label: '2025-06', pinned: 210, locked: null, partial: 953, unpinned: 4993, data: 'results-june-2025.json.tar.gz' },
+            { label: '2026-04', pinned: 506, locked: null, partial: 1423, unpinned: 4867, data: 'results-april-2026.json.tar.gz' },
+            { label: '2026-11', pinned: 1158, locked: 15, partial: 1122, unpinned: 4228, data: 'results-november-2026.json.tar.gz' },
+        ];
+        const total = s => s.pinned + (s.locked || 0) + s.partial + s.unpinned;
+        const pct = (n, s) => (n / total(s) * 100);
 
-    </div>
+        const series = [
+            ['Fully pinned', s => s.pinned, '#5D8234'],
+            ['Locked', s => s.locked || 0, '#8FBF5A'],
+            ['Partially pinned', s => s.partial, '#FFD23F'],
+            ['Unpinned', s => s.unpinned, '#C64756'],
+        ];
+        new Chart(document.getElementById('historyChart'), {
+            type: 'bar',
+            data: {
+                labels: scans.map(s => s.label),
+                datasets: series.map(([label, get, color]) => ({
+                    label, backgroundColor: color, data: scans.map(s => pct(get(s), s)),
+                })),
+            },
+            options: {
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: { x: { stacked: true, max: 100, ticks: { callback: v => v + '%' } }, y: { stacked: true } },
+                plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.raw.toFixed(1)}%` } } },
+            },
+        });
 
-    <!-- How to pin GH Actions-->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow-sm p-12 rounded-lg text-justify">
-        <h2 class="text-2xl font-bold text-center">How to secure (and update) your GitHub Actions?</h2>
+        const fmt = n => n.toLocaleString('en-US');
+        document.getElementById('historyTable').innerHTML = scans.map(s => `
+            <tr class="border-b border-gray-100 [&>td]:pr-2 [&>td]:py-1"><td>${s.label}</td>
+            <td>${fmt(s.pinned)}</td><td>${s.locked === null ? '&ndash;' : fmt(s.locked)}</td>
+            <td>${fmt(s.partial)}</td><td>${fmt(s.unpinned)}</td><td class="hidden sm:table-cell">${fmt(total(s))}</td>
+            <td><a href="${s.data}" class="text-blue-500 hover:underline">tar.gz</a></td></tr>`).join('');
 
-        <p class="mt-2 text-base">Neither managing hashes nor manually updating Actions is fun or developer-friendly. We take the pain out of this process with tools and automations available to the community.</p>
-
-        <h3 class="mt-4 text-xl font-bold">1. Migrate with Frizbee</h3>
-
-        <p class="mt-2 text-base">Instead of manually looking up the digest for each tag or branch in our GitHub Actions, we can use Frizbee. <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee">Frizbee is a tool you may throw a tag at and it comes back with a checksum.</a></p>
-
-        <p class="mt-2 text-base">Download the latest <a class="text-blue-500 hover:underline" href="https://github.com/stacklok/frizbee/releases">release</a> and point Frizbee at your GitHub Actions folder:</p>
-
-        <div class="relative my-4 w-full max-w-3xl mx-auto">
-            <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-bash">frizbee ghactions -d path/to/your/repo/.github/workflows/</code></pre>
-        </div>
-
-        <p class="mt-2 text-base">This will replace all tags and branches with their corresponding digest, freezing your GitHub Action dependencies in time.</p>
-
-        <h3 class="mt-4 text-xl font-bold">2. Update pinned Actions with Renovate</h3>
-
-        <p class="mt-2 text-base">Even when pinning our GitHub Actions, we still want to receive updates, but we are in control when to apply those. Renovate has <a class="text-blue-500 hover:underline" href="https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests">build in support</a> to update GitHub Actions that are pinned. It even understands <a class="text-blue-500 hover:underline" href="https://semver.org/">SemVer</a> ranges and keeps the version comment up to date, so a developer can easily keep track of the used versions.</p>
-
-        <p class="mt-2 text-base">Simply add these setting to your <b>renovate.json</b>:</p>
-
-        <div class="relative my-4 w-full max-w-3xl mx-auto">
-            <pre class="rounded-md overflow-auto bg-gray-900 p-4"><code class="language-json">
-    {
-        "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-        "extends": [
-          "config:base",
-          ":preserveSemverRanges",
-          "helpers:pinGitHubActionDigests"
-        ],
-        // rest of your config
-     }
-            </code></pre>
-        </div>
-
-    </div>
-
-    <!-- Limitations -->
-    <div class="mt-6 w-full max-w-4xl bg-white shadow-sm p-8 rounded-lg text-justify">
-        <h2 class="text-2xl font-bold text-center">Known Limitations</h2>
-
-        <p class="mt-2 text-base">Pinning GitHub Actions will not protect us from all attacks. It is important to understand which risks remain.</p>
-
-        <p class="mt-2 text-base">A blog post by PaloAlto Networks <a class="text-blue-500 hover:underline" href="https://www.paloaltonetworks.com/blog/prisma-cloud/unpinnable-actions-github-security/">Unpinnable Actions: How Malicious Code Can Sneak into Your GitHub Actions Workflows</a> demonstrates that dependencies can still introduce breaking changes or have the potential to introduce malicious code into our pipelines.</p>
-
-    </div>
-
+        // Findings by severity, summed over all repositories in zizmor-web.js.
+        const severities = ['High', 'Medium', 'Low', 'Informational'];
+        const bySeverity = Object.fromEntries(severities.map(s => [s, 0]));
+        for (const repo of ZIZMOR_DATA) {
+            for (const rule of repo.rules) bySeverity[rule.severity] += rule.count;
+        }
+        const findings = Object.values(bySeverity).reduce((a, b) => a + b, 0);
+        document.getElementById('zizFindings').textContent = fmt(findings);
+        new Chart(document.getElementById('zizChart'), {
+            type: 'doughnut',
+            // Same colors as the explorer, with the counts in the legend.
+            data: { labels: severities.map(s => `${s} ${fmt(bySeverity[s])}`),
+                datasets: [{ data: severities.map(s => bySeverity[s]), backgroundColor: ['#C64756', '#D97706', '#3B82F6', '#6B7280'] }] },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Findings by severity' },
+                    tooltip: { callbacks: { label: c => `${severities[c.dataIndex]}: ${fmt(c.raw)} (${(c.raw / findings * 100).toFixed(1)}%)` } },
+                },
+            },
+        });
+    </script>
 </body>
+
 </html>
