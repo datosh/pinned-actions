@@ -19,7 +19,7 @@ jobs:
   scan:
     name: Scan
     runs-on: ubuntu-26.04
-    timeout-minutes: 120
+    timeout-minutes: 360
     permissions:
       contents: read
     concurrency:
@@ -46,6 +46,8 @@ jobs:
       # Keep the version at or above minLockfileCLIVersion in analysis_lockfile.go.
       run: gh extension install github/gh-actions-lock --pin v0.4.1
     - name: Scan
+      # Leave 15min below job limit to safe partial results
+      timeout-minutes: 345
       env:
         GITHUB_TOKEN: ${{ github.token }}
         PAGES: ${{ inputs.pages }}
