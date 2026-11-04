@@ -13,7 +13,7 @@ import (
 	"slices"
 	"strings"
 
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // lockfileName is the GitHub Actions workflow lockfile, kept next to the
