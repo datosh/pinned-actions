@@ -6,7 +6,7 @@ require (
 	github.com/google/go-github/v93 v93.0.0
 	github.com/stacklok/frizbee v0.1.11
 	github.com/stretchr/testify v1.12.1
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 )
 
 require (
