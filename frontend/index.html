@@ -12,9 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
 </head>
 
-<!-- MOCKUP: numbers come from the 2026-11 10k scan (real), the lockfile history is empty on purpose
-     because lockfiles did not exist before October 2026. Wording is a draft. -->
-
 <body class="flex flex-col items-center py-6 bg-gray-100 min-h-screen text-gray-800">
     <header class="w-full bg-white shadow-sm py-4 mb-6">
         <h1 class="text-2xl font-bold text-center">Lock GitHub Actions</h1>
@@ -36,11 +33,11 @@
             while your workflows keep readable tags.</p>
 
         <div class="grid grid-cols-3 gap-4 mt-8 text-center">
-            <div><div id="lockedCount" class="text-4xl font-bold text-green-700">21</div>
+            <div><div id="lockedCount" class="text-4xl font-bold text-green-700">&ndash;</div>
                 <div class="text-sm text-gray-600 mt-1">repositories have an <code>actions.lock</code></div></div>
-            <div><div id="lockedPct" class="text-4xl font-bold text-green-700">0.3%</div>
-                <div class="text-sm text-gray-600 mt-1">of the 6,523 repositories that use Actions</div></div>
-            <div><div id="lockedComplete" class="text-4xl font-bold text-green-700">19</div>
+            <div><div id="lockedPct" class="text-4xl font-bold text-green-700">&ndash;</div>
+                <div class="text-sm text-gray-600 mt-1">of the <span id="usesActions">&ndash;</span> repositories that use Actions</div></div>
+            <div><div id="lockedComplete" class="text-4xl font-bold text-green-700">&ndash;</div>
                 <div class="text-sm text-gray-600 mt-1">of those lock <i>every</i> workflow completely</div></div>
         </div>
     </section>
@@ -136,21 +133,29 @@ gh actions-lock</code></pre>
     </footer>
 
     <script src="zizmor-web.js"></script>
-    <script>
-        // 2026-11 is real scan data; older rows are pinned.json. null = not measured.
-        const scans = [
-            { label: '2024-05', pinned: 112, locked: null, partial: 639, unpinned: 4739, data: 'results-may-2024.json.tar.gz' },
-            { label: '2025-06', pinned: 210, locked: null, partial: 953, unpinned: 4993, data: 'results-june-2025.json.tar.gz' },
-            { label: '2026-04', pinned: 506, locked: null, partial: 1423, unpinned: 4867, data: 'results-april-2026.json.tar.gz' },
-            { label: '2026-11', pinned: 1158, locked: 15, partial: 1122, unpinned: 4228, data: 'results-november-2026.json.tar.gz' },
-        ];
-        const total = s => s.pinned + (s.locked || 0) + s.partial + s.unpinned;
+    <script type="module">
+        // One entry per scan, oldest first. The scan workflow adds a new one every month.
+        // Scans before lockfiles existed have no lockfile counts.
+        const scans = await (await fetch('scans.json')).json();
+        const hasLockfileData = s => s['with-lockfile'] !== undefined;
+        const total = s => s.pinned + (s.locked || 0) + s['partially-pinned'] + s.unpinned;
         const pct = (n, s) => (n / total(s) * 100);
+
+        const fmt = n => n.toLocaleString('en-US');
+
+        // Lockfile adoption in the newest scan that measured it.
+        const latest = scans.findLast(hasLockfileData);
+        if (latest) {
+            document.getElementById('lockedCount').textContent = fmt(latest['with-lockfile']);
+            document.getElementById('lockedPct').textContent = (latest['with-lockfile'] / total(latest) * 100).toFixed(1) + '%';
+            document.getElementById('lockedComplete').textContent = fmt(latest['lockfile-complete']);
+            document.getElementById('usesActions').textContent = fmt(total(latest));
+        }
 
         const series = [
             ['Fully pinned', s => s.pinned, '#5D8234'],
             ['Locked', s => s.locked || 0, '#8FBF5A'],
-            ['Partially pinned', s => s.partial, '#FFD23F'],
+            ['Partially pinned', s => s['partially-pinned'], '#FFD23F'],
             ['Unpinned', s => s.unpinned, '#C64756'],
         ];
         new Chart(document.getElementById('historyChart'), {
@@ -169,11 +174,10 @@ gh actions-lock</code></pre>
             },
         });
 
-        const fmt = n => n.toLocaleString('en-US');
         document.getElementById('historyTable').innerHTML = scans.map(s => `
             <tr class="border-b border-gray-100 [&>td]:pr-2 [&>td]:py-1"><td>${s.label}</td>
-            <td>${fmt(s.pinned)}</td><td>${s.locked === null ? '&ndash;' : fmt(s.locked)}</td>
-            <td>${fmt(s.partial)}</td><td>${fmt(s.unpinned)}</td><td class="hidden sm:table-cell">${fmt(total(s))}</td>
+            <td>${fmt(s.pinned)}</td><td>${hasLockfileData(s) ? fmt(s.locked || 0) : '&ndash;'}</td>
+            <td>${fmt(s['partially-pinned'])}</td><td>${fmt(s.unpinned)}</td><td class="hidden sm:table-cell">${fmt(total(s))}</td>
             <td><a href="${s.data}" class="text-blue-500 hover:underline">tar.gz</a></td></tr>`).join('');
 
         // Findings by severity, summed over all repositories in zizmor-web.js.

@@ -61,7 +61,7 @@ downloaded again. Use the same flags as the interrupted run.
 Convert scan results into the files the website reads:
 
 ```sh
-go run . export-pinned --result-dir=results --year=2026
+go run . export-pinned --result-dir=results --label=2026-12 --data=results-2026-12.json.tar.gz
 go run . export-zizmor --result-dir=results --out=frontend/zizmor-web.js
 ```
 
@@ -72,14 +72,29 @@ was last written). A repository counts as pinned if all its actions are
 SHA-pinned; otherwise as locked if `lockfile.jsonl` says its
 [lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)
 is complete (the lockfile data is optional and the repository count with a
-lockfile is recorded as `with-lockfile`). It stores the counts under `--year` in
-`frontend/pinned.json`, keeping the other years. The website fills the
-percentages and the "last updated" date in its text from the newest year.
+lockfile is recorded as `with-lockfile`, those with a complete one as
+`lockfile-complete`). It adds the counts as the scan `--label` (a month,
+`YYYY-MM`, default: the month of the scan) to `frontend/scans.json`, replacing a
+scan with the same label and keeping the others. `--data` names the downloadable
+archive of the scan, which the website links in its history table. The website
+draws its history chart and the lockfile numbers from the file.
 `--raw=FILE` additionally writes all per-repository results as one JSON array,
-e.g. for the downloadable data archive.
+e.g. for that archive (a `tar.gz` with this file as `result.json`).
 
 `export-zizmor` also reads `stars.json`, so run it against the same
 `--result-dir` as the scan.
+
+### Monthly scan
+
+`.github/workflows/scan.yml` scans the top 10,000 repositories on the first of
+every month (or on demand). Its `scan` job only has read access and uploads the
+exported website data as the `site-data` artifact. The `publish` job downloads
+that artifact, copies `scans.json`, `zizmor-web.js` and the archive of the month
+into `frontend/` and opens a pull request from the branch `scan/YYYY-MM`.
+Nothing is pushed to `main`: merging the pull request publishes the data. For a
+manual run, set the `publish` input to get the pull request as well. The
+repository setting "Allow GitHub Actions to create and approve pull requests"
+must be enabled.
 
 ## Example
 

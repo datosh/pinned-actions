@@ -1,17 +1,25 @@
 name: Scan
 
 # Scans the most popular repositories and keeps the results as a workflow artifact.
+# Every month, and on request with `publish`, it also opens a pull request that
+# adds the scan to the website. Merging that pull request publishes the data.
 on:
+  schedule:
+  - cron: '0 3 1 * *'
   workflow_dispatch:
     inputs:
       pages:
-        description: Number of search pages to scan, 100 repositories each
+        description: Number of search pages to scan, 100 repositories each (scheduled runs scan 100)
         type: string
         default: '1'
       analyzers:
-        description: Comma-separated analyzers to run
+        description: Comma-separated analyzers to run (scheduled runs use pinned,zizmor,lockfile)
         type: string
         default: pinned,zizmor,lockfile,immutable
+      publish:
+        description: Open a pull request that adds the scan to the website
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -25,6 +33,8 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}
       cancel-in-progress: false
+    outputs:
+      month: ${{ steps.month.outputs.month }}
     steps:
     - name: Checkout
       uses: actions/checkout@v7.0.1
@@ -45,13 +55,16 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       # Keep the version at or above minLockfileCLIVersion in analysis_lockfile.go.
       run: gh extension install github/gh-actions-lock --pin v0.4.1
+    - name: Set month of the scan
+      id: month
+      run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
     - name: Scan
       # Leave 15min below job limit to safe partial results
       timeout-minutes: 345
       env:
         GITHUB_TOKEN: ${{ github.token }}
-        PAGES: ${{ inputs.pages }}
-        ANALYZERS: ${{ inputs.analyzers }}
+        PAGES: ${{ inputs.pages || '100' }}
+        ANALYZERS: ${{ inputs.analyzers || 'pinned,zizmor,lockfile' }}
       run: |
         go run . scan \
           -max-pages "$PAGES" -per-page 100 \
@@ -59,9 +72,17 @@ jobs:
           -download-dir "$RUNNER_TEMP/repos" -result-dir results
     - name: Export website data
       if: ${{ !cancelled() }}
+      env:
+        MONTH: ${{ steps.month.outputs.month }}
+      shell: bash
       run: |
-        go run . export-pinned --result-dir results --year "$(date -u +%Y)" --out results/pinned-web.json
-        go run . export-zizmor --result-dir results --out results/zizmor-web.js
+        mkdir site
+        cp frontend/scans.json site/scans.json
+        go run . export-pinned --result-dir results --label "$MONTH" \
+          --data "results-$MONTH.json.tar.gz" --raw results/result.json \
+          --out site/scans.json | tee site/summary.txt
+        tar -czf "site/results-$MONTH.json.tar.gz" -C results result.json
+        go run . export-zizmor --result-dir results --out site/zizmor-web.js
     - name: Upload results
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7.0.2
@@ -70,3 +91,53 @@ jobs:
         path: results/
         if-no-files-found: error
         retention-days: 30
+    - name: Upload website data
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: site-data
+        path: site/
+        if-no-files-found: error
+        retention-days: 30
+
+  publish:
+    name: Publish
+    needs: scan
+    # A partial scan is not published.
+    if: ${{ needs.scan.result == 'success' && (github.event_name == 'schedule' || inputs.publish) }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      actions: read # to download the artifact of the scan job
+      contents: write # to push the branch
+      pull-requests: write # to open the pull request
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+    - name: Download website data
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh run download "$GITHUB_RUN_ID" --name site-data --dir "$RUNNER_TEMP/site"
+    - name: Open pull request
+      env:
+        GH_TOKEN: ${{ github.token }}
+        MONTH: ${{ needs.scan.outputs.month }}
+      run: |
+        branch="scan/$MONTH"
+        data="results-$MONTH.json.tar.gz"
+        site="$RUNNER_TEMP/site"
+        cp "$site/scans.json" "$site/zizmor-web.js" "$site/$data" frontend/
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git switch -C "$branch"
+        git add frontend/scans.json frontend/zizmor-web.js "frontend/$data"
+        git commit -m "Add scan of $MONTH"
+        git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
+        # A run for the same month again updates the branch of the open pull request.
+        if [ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+          gh pr create --base main --head "$branch" --title "Add scan of $MONTH" \
+            --body "$(printf 'Scan of %s from [run %s](%s/%s/actions/runs/%s).\n\n%s\n\nMerging publishes it on the website.' \
+              "$MONTH" "$GITHUB_RUN_ID" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$(cat "$site/summary.txt")")"
+        fi

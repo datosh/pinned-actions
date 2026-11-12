@@ -53,25 +53,26 @@ func TestBucketPinnedWithLockfiles(t *testing.T) {
 
 	got := bucketPinned(results, lockfiles)
 
-	withLockfile := 7
+	withLockfile, lockfileComplete := 7, 3
 	assert.Equal(t, PinnedBuckets{
-		Pinned:          1, // all SHA-pinned wins over a complete lockfile
-		Locked:          2, // complete lockfile, not all SHA-pinned
-		PartiallyPinned: 1, // a lockfile that is not complete does not help
-		Unpinned:        4, // including repos missing from the lockfile data
-		NoActions:       1,
-		WithLockfile:    &withLockfile,
+		Pinned:           1, // all SHA-pinned wins over a complete lockfile
+		Locked:           2, // complete lockfile, not all SHA-pinned
+		PartiallyPinned:  1, // a lockfile that is not complete does not help
+		Unpinned:         4, // including repos missing from the lockfile data
+		NoActions:        1,
+		WithLockfile:     &withLockfile,
+		LockfileComplete: &lockfileComplete,
 	}, got)
 }
 
 func TestPinnedBucketsString(t *testing.T) {
-	withLockfile := 4
+	withLockfile, lockfileComplete := 4, 3
 
 	assert.Equal(t,
-		"pinned=221 locked=3 partially-pinned=210 unpinned=371 no-actions=185 with-lockfile=4 scanned=2026-11-02",
-		PinnedBuckets{Pinned: 221, Locked: 3, PartiallyPinned: 210, Unpinned: 371, NoActions: 185, WithLockfile: &withLockfile, Scanned: "2026-11-02"}.String())
+		"pinned=221 locked=3 partially-pinned=210 unpinned=371 no-actions=185 with-lockfile=4 lockfile-complete=3 scanned=2026-11-02",
+		PinnedBuckets{Pinned: 221, Locked: 3, PartiallyPinned: 210, Unpinned: 371, NoActions: 185, WithLockfile: &withLockfile, LockfileComplete: &lockfileComplete, Scanned: "2026-11-02"}.String())
 	assert.Equal(t,
-		"pinned=1 locked=0 partially-pinned=0 unpinned=0 no-actions=0 with-lockfile=unknown scanned=",
+		"pinned=1 locked=0 partially-pinned=0 unpinned=0 no-actions=0 with-lockfile=unknown lockfile-complete=unknown scanned=",
 		PinnedBuckets{Pinned: 1}.String())
 }
 
@@ -93,52 +94,70 @@ func TestReadLockfileResults(t *testing.T) {
 	assert.ErrorContains(t, err, "parsing")
 }
 
-func TestSetYear(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "pinned.json")
+func TestSetScan(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "scans.json")
 
 	// The file does not exist yet.
-	require.NoError(t, setYear(path, "2025", PinnedBuckets{Pinned: 1, PartiallyPinned: 2, Unpinned: 3}))
-	// A second year is added, the first one kept.
-	require.NoError(t, setYear(path, "2026", PinnedBuckets{Pinned: 4, PartiallyPinned: 5, Unpinned: 6}))
-	// An existing year is replaced.
-	require.NoError(t, setYear(path, "2025", PinnedBuckets{Pinned: 7, PartiallyPinned: 8, Unpinned: 9}))
+	require.NoError(t, setScan(path, ScanEntry{Label: "2026-12", PinnedBuckets: PinnedBuckets{Pinned: 1, PartiallyPinned: 2, Unpinned: 3}, Data: "december.tar.gz"}))
+	// An earlier scan is added before the existing one.
+	require.NoError(t, setScan(path, ScanEntry{Label: "2026-11", PinnedBuckets: PinnedBuckets{Pinned: 4, PartiallyPinned: 5, Unpinned: 6}}))
+	// A scan with an existing label is replaced.
+	require.NoError(t, setScan(path, ScanEntry{Label: "2026-12", PinnedBuckets: PinnedBuckets{Pinned: 7, PartiallyPinned: 8, Unpinned: 9}, Data: "december.tar.gz"}))
 
 	got, err := os.ReadFile(path)
 	require.NoError(t, err)
-	// Same layout as the hand-maintained file: four-space indent, newline at the end.
-	assert.Equal(t, `{
-    "2025": {
-        "pinned": 7,
-        "partially-pinned": 8,
-        "unpinned": 9
-    },
-    "2026": {
+	// Four-space indent, newline at the end.
+	assert.Equal(t, `[
+    {
+        "label": "2026-11",
         "pinned": 4,
         "partially-pinned": 5,
         "unpinned": 6
+    },
+    {
+        "label": "2026-12",
+        "pinned": 7,
+        "partially-pinned": 8,
+        "unpinned": 9,
+        "data": "december.tar.gz"
     }
-}
+]
 `, string(got))
 }
 
-func TestSetYearWritesNewFieldsOnlyWhenSet(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "pinned.json")
-	require.NoError(t, setYear(path, "2025", PinnedBuckets{Pinned: 1}))
-	require.NoError(t, setYear(path, "2026", PinnedBuckets{Pinned: 2, NoActions: 3, Scanned: "2026-11-02"}))
+func TestSetScanWritesOptionalFieldsOnlyWhenSet(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "scans.json")
+	withLockfile, lockfileComplete := 21, 19
+	require.NoError(t, setScan(path, ScanEntry{Label: "2025-06", PinnedBuckets: PinnedBuckets{Pinned: 1}}))
+	require.NoError(t, setScan(path, ScanEntry{Label: "2026-11", PinnedBuckets: PinnedBuckets{
+		Pinned: 2, Locked: 4, NoActions: 3, WithLockfile: &withLockfile, LockfileComplete: &lockfileComplete, Scanned: "2026-11-02",
+	}}))
 
 	got, err := os.ReadFile(path)
 	require.NoError(t, err)
-	assert.JSONEq(t, `{
-		"2025": {"pinned": 1, "partially-pinned": 0, "unpinned": 0},
-		"2026": {"pinned": 2, "partially-pinned": 0, "unpinned": 0, "no-actions": 3, "scanned": "2026-11-02"}
-	}`, string(got))
+	assert.JSONEq(t, `[
+		{"label": "2025-06", "pinned": 1, "partially-pinned": 0, "unpinned": 0},
+		{"label": "2026-11", "pinned": 2, "partially-pinned": 0, "unpinned": 0, "locked": 4, "no-actions": 3,
+		 "with-lockfile": 21, "lockfile-complete": 19, "scanned": "2026-11-02"}
+	]`, string(got))
 }
 
-func TestSetYearRejectsInvalidFile(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "pinned.json")
+func TestSetScanKeepsZeroLockfileCounts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "scans.json")
+	none := 0
+	require.NoError(t, setScan(path, ScanEntry{Label: "2026-12", PinnedBuckets: PinnedBuckets{WithLockfile: &none, LockfileComplete: &none}}))
+
+	got, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(got), `"with-lockfile": 0`, "0 differs from unknown")
+	assert.Contains(t, string(got), `"lockfile-complete": 0`)
+}
+
+func TestSetScanRejectsInvalidFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "scans.json")
 	require.NoError(t, os.WriteFile(path, []byte("not json"), 0o644))
 
-	assert.ErrorContains(t, setYear(path, "2026", PinnedBuckets{}), "parsing")
+	assert.ErrorContains(t, setScan(path, ScanEntry{Label: "2026-12"}), "parsing")
 }
 
 func TestWebResultsSkipsRepositoriesZizmorFailedOn(t *testing.T) {

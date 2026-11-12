@@ -1,0 +1,35 @@
+[
+    {
+        "label": "2024-05",
+        "pinned": 112,
+        "partially-pinned": 639,
+        "unpinned": 4739,
+        "data": "results-may-2024.json.tar.gz"
+    },
+    {
+        "label": "2025-06",
+        "pinned": 210,
+        "partially-pinned": 953,
+        "unpinned": 4993,
+        "data": "results-june-2025.json.tar.gz"
+    },
+    {
+        "label": "2026-04",
+        "pinned": 506,
+        "partially-pinned": 1423,
+        "unpinned": 4867,
+        "data": "results-april-2026.json.tar.gz"
+    },
+    {
+        "label": "2026-11",
+        "pinned": 1158,
+        "partially-pinned": 1122,
+        "unpinned": 4228,
+        "locked": 15,
+        "no-actions": 3347,
+        "with-lockfile": 21,
+        "lockfile-complete": 19,
+        "scanned": "2026-11-03",
+        "data": "results-november-2026.json.tar.gz"
+    }
+]

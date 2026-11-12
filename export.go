@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -40,7 +42,7 @@ func parseExportArgs(name, defaultOut string, args []string, extra ...func(*flag
 
 // PinnedBuckets counts the repositories that use actions by how many of those
 // actions are pinned, plus the ones that use none. Fields added later are
-// missing for years recorded before they existed.
+// missing for scans recorded before they existed.
 type PinnedBuckets struct {
 	Pinned          int `json:"pinned"`
 	PartiallyPinned int `json:"partially-pinned"`
@@ -51,19 +53,25 @@ type PinnedBuckets struct {
 	NoActions int `json:"no-actions,omitempty"`
 	// WithLockfile counts all repositories that have an actions.lock. It is
 	// only set when lockfile data was available, so that 0 differs from unknown.
-	WithLockfile *int   `json:"with-lockfile,omitempty"`
-	Scanned      string `json:"scanned,omitempty"` // YYYY-MM-DD
+	WithLockfile *int `json:"with-lockfile,omitempty"`
+	// LockfileComplete counts the repositories whose lockfile covers every
+	// workflow, whether or not their actions are also SHA-pinned. Set together
+	// with WithLockfile.
+	LockfileComplete *int   `json:"lockfile-complete,omitempty"`
+	Scanned          string `json:"scanned,omitempty"` // YYYY-MM-DD
 }
 
 // String is the one-line summary printed by export-pinned. (%+v would print the
-// address of WithLockfile.)
+// address of the lockfile counts.)
 func (b PinnedBuckets) String() string {
-	withLockfile := "unknown"
-	if b.WithLockfile != nil {
-		withLockfile = strconv.Itoa(*b.WithLockfile)
+	count := func(n *int) string {
+		if n == nil {
+			return "unknown"
+		}
+		return strconv.Itoa(*n)
 	}
-	return fmt.Sprintf("pinned=%d locked=%d partially-pinned=%d unpinned=%d no-actions=%d with-lockfile=%s scanned=%s",
-		b.Pinned, b.Locked, b.PartiallyPinned, b.Unpinned, b.NoActions, withLockfile, b.Scanned)
+	return fmt.Sprintf("pinned=%d locked=%d partially-pinned=%d unpinned=%d no-actions=%d with-lockfile=%s lockfile-complete=%s scanned=%s",
+		b.Pinned, b.Locked, b.PartiallyPinned, b.Unpinned, b.NoActions, count(b.WithLockfile), count(b.LockfileComplete), b.Scanned)
 }
 
 // bucketPinned sorts repositories into the disjoint buckets. A repository
@@ -73,11 +81,14 @@ func (b PinnedBuckets) String() string {
 // missing from it has no lockfile.
 func bucketPinned(results []Analysis, lockfiles map[string]LockfileResult) PinnedBuckets {
 	var b PinnedBuckets
-	withLockfile := 0
+	withLockfile, lockfileComplete := 0, 0
 	for _, r := range results {
 		lockfile := lockfiles[r.Repository]
 		if lockfile.HasLockfile {
 			withLockfile++
+		}
+		if lockfile.Complete {
+			lockfileComplete++
 		}
 		switch {
 		case r.ActionsTotal == 0:
@@ -94,6 +105,7 @@ func bucketPinned(results []Analysis, lockfiles map[string]LockfileResult) Pinne
 	}
 	if lockfiles != nil {
 		b.WithLockfile = &withLockfile
+		b.LockfileComplete = &lockfileComplete
 	}
 	return b
 }
@@ -115,16 +127,28 @@ func readLockfileResults(dir string) (map[string]LockfileResult, error) {
 	return byRepo, nil
 }
 
-// setYear records buckets under year in the JSON file at path (year -> counts),
-// creating the file if needed and keeping the other years.
-func setYear(path, year string, buckets PinnedBuckets) error {
-	years := map[string]PinnedBuckets{}
-	if err := readJSON(path, &years); err != nil && !errors.Is(err, fs.ErrNotExist) {
+// ScanEntry is one scan in the frontend's scans.json: the counts of the scan,
+// labeled with its month, and the archive with the raw results.
+type ScanEntry struct {
+	Label string `json:"label"` // YYYY-MM
+	PinnedBuckets
+	// Data is the file name of the downloadable archive, next to scans.json.
+	Data string `json:"data,omitempty"`
+}
+
+// setScan records entry in the JSON file at path (a list of scans, oldest
+// first), creating the file if needed. An existing scan with the same label is
+// replaced, the other scans are kept.
+func setScan(path string, entry ScanEntry) error {
+	var scans []ScanEntry
+	if err := readJSON(path, &scans); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	years[year] = buckets
+	scans = slices.DeleteFunc(scans, func(s ScanEntry) bool { return s.Label == entry.Label })
+	scans = append(scans, entry)
+	slices.SortFunc(scans, func(a, b ScanEntry) int { return strings.Compare(a.Label, b.Label) })
 
-	data, err := json.MarshalIndent(years, "", "    ")
+	data, err := json.MarshalIndent(scans, "", "    ")
 	if err != nil {
 		return fmt.Errorf("encoding %s: %w", path, err)
 	}
@@ -133,22 +157,20 @@ func setYear(path, year string, buckets PinnedBuckets) error {
 
 // runExportPinned implements the "export-pinned" subcommand. It counts how
 // many repositories in pinned.jsonl are fully, partially or not pinned and
-// stores the counts under --year in the frontend's pinned.json, keeping the
-// other years.
+// stores the counts under --label in the frontend's scans.json, keeping the
+// other scans.
 //
 // Usage:
 //
-//	pinned-actions export-pinned --result-dir=results/ --year=2026
+//	pinned-actions export-pinned --result-dir=results/ --label=2026-12 --data=results-2026-12.json.tar.gz
 func runExportPinned(args []string) {
-	var year, raw, scanned string
-	a := parseExportArgs("export-pinned", "frontend/pinned.json", args, func(flags *flag.FlagSet) {
-		flags.StringVar(&year, "year", "", "year to create or replace in the output file (required)")
+	var label, data, raw, scanned string
+	a := parseExportArgs("export-pinned", "frontend/scans.json", args, func(flags *flag.FlagSet) {
+		flags.StringVar(&label, "label", "", "month of the scan, YYYY-MM, to create or replace in the output file (default: month of --scanned)")
+		flags.StringVar(&data, "data", "", "file name of the downloadable archive with the raw results, next to the output file")
 		flags.StringVar(&raw, "raw", "", "also write all per-repository results to this file as a JSON array")
 		flags.StringVar(&scanned, "scanned", "", "date of the scan, YYYY-MM-DD (default: last modification of pinned.jsonl)")
 	})
-	if _, err := strconv.Atoi(year); err != nil || len(year) != 4 {
-		fatal("-year must be a four-digit year", "year", year)
-	}
 
 	in := filepath.Join(a.ResultDir, "pinned.jsonl")
 	if scanned == "" {
@@ -159,6 +181,11 @@ func runExportPinned(args []string) {
 		scanned = info.ModTime().UTC().Format(time.DateOnly)
 	} else if _, err := time.Parse(time.DateOnly, scanned); err != nil {
 		fatal("-scanned must be a date like 2026-04-28", "scanned", scanned)
+	}
+	if label == "" {
+		label = scanned[:len("2006-01")]
+	} else if _, err := time.Parse("2006-01", label); err != nil {
+		fatal("-label must be a month like 2026-04", "label", label)
 	}
 
 	results, err := readJSONL[Analysis](in)
@@ -176,7 +203,7 @@ func runExportPinned(args []string) {
 
 	buckets := bucketPinned(results, lockfiles)
 	buckets.Scanned = scanned
-	if err := setYear(a.Out, year, buckets); err != nil {
+	if err := setScan(a.Out, ScanEntry{Label: label, PinnedBuckets: buckets, Data: data}); err != nil {
 		fatal("export failed", "error", err)
 	}
 	if raw != "" {
@@ -185,5 +212,5 @@ func runExportPinned(args []string) {
 		}
 	}
 
-	fmt.Printf("Scanned %d repositories; %s recorded for %s in %s\n", len(results), buckets, year, a.Out)
+	fmt.Printf("Scanned %d repositories; %s recorded for %s in %s\n", len(results), buckets, label, a.Out)
 }
