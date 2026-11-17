@@ -31,7 +31,7 @@ jobs:
         gh extension install github/gh-actions-lock --pin v0.4.1
         gh actions-lock --verify
     - name: Set up Go
-      uses: actions/setup-go@v7.0.0
+      uses: actions/setup-go@v7.1.0
       with:
         go-version-file: go.mod
     - name: Build
